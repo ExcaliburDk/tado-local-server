@@ -750,6 +750,201 @@
             height: 300px;
             margin-bottom: 20px;
         }
+
+        /* Modern interface refinements */
+        :root {
+            --surface-shadow: 0 14px 34px rgba(24, 39, 75, 0.08);
+            --surface-shadow-hover: 0 18px 42px rgba(24, 39, 75, 0.14);
+            --focus-ring: 0 0 0 3px rgba(255, 123, 46, 0.22);
+        }
+
+        body {
+            background:
+                radial-gradient(circle at 12% -10%, rgba(255, 123, 46, 0.10), transparent 32rem),
+                var(--bg-primary);
+            min-height: 100vh;
+            padding: clamp(14px, 3vw, 32px);
+        }
+
+        .container {
+            max-width: 1280px;
+        }
+
+        .header {
+            background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+            border: 1px solid var(--border-light);
+            border-radius: 18px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            box-shadow: var(--surface-shadow);
+            gap: 14px;
+        }
+
+        .header-left h1 {
+            letter-spacing: -0.025em;
+            font-weight: 650;
+        }
+
+        .schedule-button,
+        .window-toggle,
+        .theme-toggle {
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            box-shadow: 0 2px 8px rgba(24, 39, 75, 0.05);
+        }
+
+        .schedule-button {
+            min-height: 48px;
+            padding: 7px 13px;
+            border-radius: 12px;
+            transition: border-color .2s, background .2s, transform .2s, box-shadow .2s;
+        }
+
+        .schedule-button:hover {
+            border: 1px solid var(--accent);
+            transform: translateY(-1px);
+            box-shadow: var(--surface-shadow-hover);
+        }
+
+        .schedule-button h4 { font-weight: 650; }
+
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(110px, auto)) 1fr;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            box-shadow: var(--surface-shadow);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            min-height: 38px;
+            padding: 8px 11px;
+            border-radius: 10px;
+            background: color-mix(in srgb, var(--bg-primary) 62%, transparent);
+            font-size: 13px;
+        }
+
+        .status-actions {
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            background: transparent;
+            padding: 0;
+        }
+
+        .status-actions .btn {
+            flex: 0 1 auto;
+            min-height: 38px;
+            padding: 9px 12px;
+            font-size: 12px;
+        }
+
+        .zones-grid {
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 16px;
+        }
+
+        .zone-card {
+            min-height: 176px;
+            border: 1px solid rgba(255,255,255,.18);
+            box-shadow: var(--surface-shadow);
+        }
+
+        .zone-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--surface-shadow-hover);
+        }
+
+        .modal {
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content,
+        #setup-panel .card {
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, .22);
+        }
+
+        #setup-panel .card {
+            background: var(--bg-card);
+            padding: clamp(22px, 4vw, 34px);
+        }
+
+        #setup-panel h1 { margin-bottom: 8px; font-weight: 700; }
+        #setup-panel p { color: var(--text-secondary); line-height: 1.55; margin-bottom: 18px; }
+        #setup-panel label { display: block; margin: 14px 0 7px; font-size: 13px; font-weight: 650; color: var(--text-secondary); }
+        #setup-panel input,
+        .history-select {
+            width: 100%;
+            min-height: 44px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        #setup-panel input:focus,
+        .history-select:focus,
+        button:focus-visible {
+            border-color: var(--accent);
+            box-shadow: var(--focus-ring);
+            outline: none;
+        }
+
+        .btn {
+            min-height: 44px;
+            border-radius: 10px;
+            font-weight: 650;
+            letter-spacing: .01em;
+            transition: transform .2s, box-shadow .2s, background .2s;
+        }
+
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 7px 16px rgba(24, 39, 75, .12); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: .6; cursor: wait; transform: none; box-shadow: none; }
+
+        .tabs {
+            padding: 4px;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            background: var(--bg-primary);
+        }
+
+        .tab-button {
+            border-radius: 8px;
+            border-bottom: 0;
+            margin-bottom: 0;
+        }
+
+        .tab-button.active { background: var(--bg-card); box-shadow: 0 2px 8px rgba(24, 39, 75, .08); }
+
+        @media (max-width: 850px) {
+            .status-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .status-actions { grid-column: 1 / -1; justify-content: stretch; }
+            .status-actions .btn { flex: 1; }
+        }
+
+        @media (max-width: 650px) {
+            .header { padding: 12px; }
+            .header-left { min-width: 0; }
+            .header-left h1 { overflow: hidden; text-overflow: ellipsis; }
+            .header-center { gap: 8px; }
+            .schedule-button { flex: 1; justify-content: center; }
+            .status-bar { grid-template-columns: 1fr; }
+            .status-actions { grid-column: auto; display: grid; grid-template-columns: 1fr; }
+            .zones-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+            .zone-card { min-height: 155px; padding: 15px; }
+            .zone-temp { font-size: 39px; }
+            .modal-content { padding: 20px; width: calc(100% - 24px); }
+        }
     </style>
     <svg aria-hidden="true" style="display:none;" id="svgdefs" version="2" xmlns="http://www.w3.org/2000/svg">
         <defs>
