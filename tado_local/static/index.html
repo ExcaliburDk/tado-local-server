@@ -930,6 +930,11 @@
             <div class="status-item">
                 Last update: <span class="status-value" id="last-update">-</span>
             </div>
+            <div class="status-item status-actions">
+                <button class="btn btn-secondary" id="refresh-homekit" title="Fetch current data from the local HomeKit bridge">Refresh HomeKit</button>
+                <button class="btn btn-secondary" id="refresh-cloud" title="Fetch metadata from Tado Cloud. This uses a cloud API call">Refresh Cloud</button>
+                <button class="btn btn-secondary" id="refresh-zones" title="Reload the zones already held by TadoLocal">Reload zones</button>
+            </div>
         </div>
 
         <div id="error-message" class="error" style="display: none;"></div>
@@ -1441,6 +1446,31 @@
                 console.error('Failed to load status:', error);
             }
         }
+
+        async function runRefresh(path, buttonId, message) {
+            const button = document.getElementById(buttonId);
+            const errorEl = document.getElementById('error-message');
+            button.disabled = true;
+            button.textContent = 'Working...';
+            try {
+                const response = await fetch(path, { method: 'POST' });
+                if (!response.ok) throw new Error(await response.text());
+                await loadZones();
+                await loadStatus();
+                errorEl.style.display = 'block';
+                errorEl.className = 'success';
+                errorEl.textContent = message;
+            } catch (error) {
+                showError('Refresh failed: ' + error.message);
+            } finally {
+                button.disabled = false;
+                button.textContent = buttonId === 'refresh-homekit' ? 'Refresh HomeKit' : buttonId === 'refresh-cloud' ? 'Refresh Cloud' : 'Reload zones';
+            }
+        }
+
+        document.getElementById('refresh-homekit').addEventListener('click', () => runRefresh('/refresh', 'refresh-homekit', 'HomeKit data refreshed'));
+        document.getElementById('refresh-cloud').addEventListener('click', () => runRefresh('/refresh/cloud?battery_only=false', 'refresh-cloud', 'Cloud data refreshed'));
+        document.getElementById('refresh-zones').addEventListener('click', () => loadZones());
 
         function updateStatus(data) {
             const statusBar = document.getElementById('status-bar');
