@@ -51,6 +51,9 @@ MODE_LABELS = {
     2: "COOL"
 }
 
+MIN_TARGET_TEMPERATURE = 5.0
+MAX_TARGET_TEMPERATURE = 30.0
+
 
 def get_api_key(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> Optional[str]:
     """
@@ -377,6 +380,8 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
                         'zone_id': device_info.get('zone_id'),
                         'device_type': device_info.get('device_type'),
                         'is_zone_leader': device_info.get('is_zone_leader', False),
+                        'min_temp': MIN_TARGET_TEMPERATURE,
+                        'max_temp': MAX_TARGET_TEMPERATURE,
                         'state': {
                             'cur_temp_c': cur_temp_c,
                             'cur_temp_f': round(cur_temp_c * 9/5 + 32, 1) if cur_temp_c is not None else None,
@@ -387,6 +392,8 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
                             'cur_heating': state.get('current_heating_cooling_state'),
                             'valve_position': state.get('valve_position'),
                             'battery_low': battery_low,
+                            'min_temp': MIN_TARGET_TEMPERATURE,
+                            'max_temp': MAX_TARGET_TEMPERATURE,
                         }
                     }
 
@@ -444,6 +451,8 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
             'device_type': device_info.get('device_type'),
             'is_zone_leader': device_info.get('is_zone_leader'),
             'is_circuit_driver': device_info.get('is_circuit_driver'),
+            'min_temp': MIN_TARGET_TEMPERATURE,
+            'max_temp': MAX_TARGET_TEMPERATURE,
             'state': {
                 'cur_temp_c': cur_temp_c,
                 'cur_temp_f': round(cur_temp_c * 9/5 + 32, 1) if cur_temp_c is not None else None,
@@ -454,6 +463,8 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
                 'cur_heating': state.get('current_heating_cooling_state'),
                 'valve_position': state.get('valve_position'),
                 'battery_low': battery_low,
+                'min_temp': MIN_TARGET_TEMPERATURE,
+                'max_temp': MAX_TARGET_TEMPERATURE,
             }
         }
 
@@ -598,6 +609,8 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
                 'device_count': device_count,
                 'window_open_time': window_open_time,
                 'window_rest_time': window_rest_time,
+                'min_temp': MIN_TARGET_TEMPERATURE,
+                'max_temp': MAX_TARGET_TEMPERATURE,
                 'state': state_summary
             })
 
@@ -949,6 +962,8 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
             'device_count': device_count,
             'window_open_time': window_open_time,
             'window_rest_time': window_rest_time,
+            'min_temp': MIN_TARGET_TEMPERATURE,
+            'max_temp': MAX_TARGET_TEMPERATURE,
             'state': state_summary
         }
 
@@ -1052,6 +1067,7 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
                 no_implicit_mode: Optional[bool] = False,
                 heating_mode: Optional[int] = None,
                 persistant: Optional[bool] = False,
+                persistent: Optional[bool] = None,
                 api_key: Optional[str] = Depends(get_api_key)
              ):
         """
@@ -1088,7 +1104,14 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
             - temperature=0 is useful for "away mode": turn off but remember setpoint (with persistant=true to set overlay forever until manually turned back on)
         """
         # Log the incoming request
-        logger.info(f"POST /zones/{zone_id}/set temperature={temperature} heating_enabled={heating_enabled} heating_mode={heating_mode} no_implicit_mode={no_implicit_mode} persistant={persistant}")
+        if persistent is not None:
+            # Keep the historical misspelling for backwards compatibility while
+            # accepting the correctly spelled parameter for new integrations.
+            if persistant not in (False, persistent):
+                raise HTTPException(status_code=400, detail="Use either persistent or persistant, not conflicting values")
+            persistant = persistent
+
+        logger.info(f"POST /zones/{zone_id}/set temperature={temperature} heating_enabled={heating_enabled} heating_mode={heating_mode} no_implicit_mode={no_implicit_mode} persistent={persistant}")
 
         tado_api = get_tado_api()
         if not tado_api:
@@ -1099,9 +1122,9 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
 
         # Validate temperature range first
         if temperature is not None:
-            if temperature < -1.0 or temperature > 30.0:
+            if temperature < -1.0 or temperature > MAX_TARGET_TEMPERATURE:
                 raise HTTPException(status_code=400, detail="Temperature must be -1 (resume), 0 (off), or between 5 and 30°C")
-            if temperature > 0 and temperature < 5.0:
+            if temperature > 0 and temperature < MIN_TARGET_TEMPERATURE:
                 raise HTTPException(status_code=400, detail="Temperature must be -1, 0, or between 5 and 30°C")
 
         if temperature is None and heating_enabled is None and heating_mode is None:
@@ -1125,7 +1148,7 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
             resolved_temperature = None
             if heating_mode is None:
                 resolved_heating_enabled = False
-        elif temperature is not None and temperature >= 5.0:
+        elif temperature is not None and temperature >= MIN_TARGET_TEMPERATURE:
             if heating_enabled is None and heating_mode is None and no_implicit_mode is False:
                 resolved_heating_enabled = True
 
@@ -2006,13 +2029,14 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
         return await tado_api.refresh_accessories()
 
     @app.post("/refresh/cloud", tags=["Admin"])
-    async def refresh_cloud_data(battery_only: bool = False, api_key: Optional[str] = Depends(get_api_key)):
+    async def refresh_cloud_data(battery_only: bool = True, api_key: Optional[str] = Depends(get_api_key)):
         """
         Manually refresh data from Tado Cloud API.
 
         Args:
             battery_only: If true, only refresh battery/status data (fast).
                          If false, refresh all data including config (slower).
+                         Defaults to true to minimize cloud API calls.
 
         Returns:
             Summary of refreshed data

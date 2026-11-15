@@ -179,12 +179,39 @@ class TadoLocalAPI:
                     logger.error(f"Failed to refresh standalone accessory: {e}")
 
             self.accessories_cache = list(self.accessories_dict.values())
+            # The bridge response already contains readable values. Persist them
+            # into the normalized state layer so /zones, /devices, and
+            # /thermostats are immediately useful after a refresh without an
+            # additional HomeKit request.
+            self._update_states_from_accessories(self.accessories_cache)
             self.last_update = time.time()
             logger.info(f"Refreshed {len(self.accessories_cache)} accessories total")
             return self.accessories_cache
         except Exception as e:
             logger.error(f"Failed to refresh accessories: {e}")
             raise HTTPException(status_code=503, detail=f"Failed to refresh accessories: {e}")
+
+    def _update_states_from_accessories(self, accessories):
+        """Populate normalized device state from values returned by HomeKit."""
+        timestamp = time.time()
+        updated = 0
+        for accessory in accessories:
+            device_id = accessory.get('id')
+            if not device_id:
+                continue
+            for service in accessory.get('services', []):
+                for char in service.get('characteristics', []):
+                    value = char.get('value')
+                    char_type = char.get('type', '').lower()
+                    if value is None or not char_type:
+                        continue
+                    field_name, _, _ = self.state_manager.update_device_characteristic(
+                        device_id, char_type, value, timestamp
+                    )
+                    if field_name:
+                        updated += 1
+        if updated:
+            logger.debug("Updated %s normalized state values from HomeKit refresh", updated)
 
     def _process_raw_accessories(self, raw_accessories):
         accessories = {}

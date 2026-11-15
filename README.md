@@ -694,6 +694,14 @@ curl -X POST "http://localhost:4407/zones/1/set?heating_enabled=false"
 - `temperature=0` → Turn heating off (without changing target temp)
 - `temperature=5-30` → Set specific temperature and enable heating
 
+The local UI and API allow a minimum target of **5°C**. Use `temperature=0` (or the UI's
+**Off** mode) to turn heating off while preserving Tado's stored setpoint. Use
+`temperature=-1` to resume the stored mode without changing that setpoint.
+
+For persistent schedule changes, both `persistent=true` and the legacy spelling
+`persistant=true` are accepted. Persistent changes use Tado Cloud; ordinary temperature,
+heat, cool, off, and resume commands use the local HomeKit bridge.
+
 **Smart defaults:**
 - Setting `temperature=0` automatically implies `heating_enabled=false`
 - Setting `temperature=-1` automatically implies `heating_enabled=true`
