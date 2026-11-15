@@ -1,0 +1,2006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tado Local</title>
+    <style>
+        /* Light theme (default) */
+        :root {
+            --bg-primary: #f5f5f5;
+            --bg-card: white;
+            --bg-modal: white;
+            --bg-disabled: #e0e0e0;
+            --bg-error: #ffebee;
+            --bg-success: #e8f5e9;
+            --bg-accent-subtle: #fff3e0;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --text-muted: #999;
+            --text-on-accent: white;
+            --text-error: #c62828;
+            --text-success: #388e3c;
+            --accent: #ff7b2e;
+            --accent-hover: #ff6b1e;
+            --accent-pending: #ff9642;
+            --border-color: #ddd;
+            --border-light: #e0e0e0;
+            --card-off-bg: #e0e0e0;
+            --card-off-text: #666;
+            --card-cold-start: #4caf50;
+            --card-cold-end: #45a049;
+            --card-medium-start: #ffab5e;
+            --card-medium-end: #ff9642;
+            --card-hot-start: #f44336;
+            --card-hot-end: #e53935;
+            --card-freeze-start: #b6c6fc;
+            --card-freeze-end: #96afff;
+            --card-cooling-start: #5278eb;
+            --card-cooling-end: #1d53f5;
+            --btn-secondary-bg: #e0e0e0;
+            --btn-secondary-bg-hover: #d0d0d0;
+            --btn-secondary-text: #666;
+            --cloud-connected: #4caf50;
+            --cloud-disabled: #999;
+            --battery-low: #ff5252;
+            --modal-overlay: rgba(0,0,0,0.5);
+            --chart-temp: #2196F3;
+            --chart-temp-bg: rgba(33, 150, 243, 0.1);
+            --chart-target: #FF7B2E;
+            --chart-target-bg: rgba(255, 123, 46, 0.1);
+            --chart-humidity: #4CAF50;
+            --chart-humidity-bg: rgba(76, 175, 80, 0.1);
+            --chart-heating-bg: rgba(255, 87, 34, 0.15);
+            --chart-grid: rgba(0, 0, 0, 0.1);
+            --chart-text: #666;
+        }
+
+        /* Dark theme */
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-card: #2a2a2a;
+            --bg-modal: #333;
+            --bg-disabled: #3a3a3a;
+            --bg-error: #3c1515;
+            --bg-success: #152e15;
+            --bg-accent-subtle: #3a2a1a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #aaa;
+            --text-muted: #888;
+            --text-on-accent: white;
+            --text-error: #ef9a9a;
+            --text-success: #81c784;
+            --accent: #ff7b2e;
+            --accent-hover: #ff9642;
+            --accent-pending: #ff9642;
+            --border-color: #444;
+            --border-light: #444;
+            --card-off-bg: #3a3a3a;
+            --card-off-text: #999;
+            --card-cold-start: #388e3c;
+            --card-cold-end: #2e7d32;
+            --card-medium-start: #e69540;
+            --card-medium-end: #cc7a2a;
+            --card-freeze-start: #b6c6fc;
+            --card-freeze-end: #96afff;
+            --card-cooling-start: #5278eb;
+            --card-cooling-end: #1d53f5;
+            --card-hot-start: #d32f2f;
+            --card-hot-end: #c62828;
+            --btn-secondary-bg: #444;
+            --btn-secondary-bg-hover: #555;
+            --btn-secondary-text: #ccc;
+            --cloud-connected: #66bb6a;
+            --cloud-disabled: #888;
+            --battery-low: #ff5252;
+            --modal-overlay: rgba(0,0,0,0.7);
+            --chart-temp: #64b5f6;
+            --chart-temp-bg: rgba(100, 181, 246, 0.15);
+            --chart-target: #ffab5e;
+            --chart-target-bg: rgba(255, 171, 94, 0.15);
+            --chart-humidity: #66bb6a;
+            --chart-humidity-bg: rgba(102, 187, 106, 0.15);
+            --chart-heating-bg: rgba(255, 87, 34, 0.2);
+            --chart-grid: rgba(255, 255, 255, 0.1);
+            --chart-text: #aaa;
+        }
+
+        /* Auto-detect OS preference when no explicit theme is set */
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) {
+                --bg-primary: #1a1a1a;
+                --bg-card: #2a2a2a;
+                --bg-modal: #333;
+                --bg-disabled: #3a3a3a;
+                --bg-error: #3c1515;
+                --bg-success: #152e15;
+                --bg-accent-subtle: #3a2a1a;
+                --text-primary: #e0e0e0;
+                --text-secondary: #aaa;
+                --text-muted: #888;
+                --text-on-accent: white;
+                --text-error: #ef9a9a;
+                --text-success: #81c784;
+                --accent: #ff7b2e;
+                --accent-hover: #ff9642;
+                --accent-pending: #ff9642;
+                --border-color: #444;
+                --border-light: #444;
+                --card-off-bg: #3a3a3a;
+                --card-off-text: #999;
+                --card-cold-start: #388e3c;
+                --card-cold-end: #2e7d32;
+                --card-medium-start: #e69540;
+                --card-medium-end: #cc7a2a;
+                --card-hot-start: #d32f2f;
+                --card-hot-end: #c62828;
+                --card-freeze-start: #b6c6fc;
+                --card-freeze-end: #96afff;
+                --card-cooling-start: #5278eb;
+                --card-cooling-end: #1d53f5;
+                --btn-secondary-bg: #444;
+                --btn-secondary-bg-hover: #555;
+                --btn-secondary-text: #ccc;
+                --cloud-connected: #66bb6a;
+                --cloud-disabled: #888;
+                --battery-low: #ff5252;
+                --modal-overlay: rgba(0,0,0,0.7);
+                --chart-temp: #64b5f6;
+                --chart-temp-bg: rgba(100, 181, 246, 0.15);
+                --chart-target: #ffab5e;
+                --chart-target-bg: rgba(255, 171, 94, 0.15);
+                --chart-humidity: #66bb6a;
+                --chart-humidity-bg: rgba(102, 187, 106, 0.15);
+                --chart-heating-bg: rgba(255, 87, 34, 0.2);
+                --chart-grid: rgba(255, 255, 255, 0.1);
+                --chart-text: #aaa;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: nowrap;
+        }
+
+        .header-left,
+        .header-center,
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-center {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .header-right {
+            flex: 1;
+            justify-content: flex-end;
+        }
+
+        .schedule-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 16px 4px 12px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+
+            border: 2px solid var(--border-color);
+            transition: transform 0.6s cubic-bezier(.25,.8,.25,1);
+            cursor: pointer;
+        }
+
+        .schedule-button h4 {
+            color: var(--text-primary);
+            white-space: nowrap;       
+            font-weight: normal;     
+        }
+        
+        .schedule-button div {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+
+        .schedule-button:hover {
+            border: none;
+            background-color: var(--bg-accent-subtle);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .schedule-warning {
+            font-size: 9px;
+            opacity: 0.8;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 900px) and (min-width: 650px) {
+            .schedule-button div,
+            .schedule-button-label {
+                display: none; 
+            }
+        }
+
+        @media (max-width: 650px) {
+            .header {
+                flex-wrap: wrap;
+            }
+
+            .header-left {
+                order: 1;
+                flex: 1;
+            }
+
+            .header-right {
+                order: 2;
+                flex: 0;
+                display: flex;
+                gap: 8px;
+            }
+
+            .header-center {
+                order: 3;
+                flex: 1 1 100%;       
+                gap: 30px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-top: 12px;
+            }
+        }
+
+        h1 {
+            color: var(--text-primary);
+            font-weight: 400;
+            width: 100%;
+            white-space: nowrap;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 10px;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            transition: border-color 0.4s;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+            transform: translateY(1.5px) translateX(1.5px) scale(0.94);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+
+        .zones-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .zone-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .zone-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .zone-card.heating-cold {
+            background: linear-gradient(135deg, var(--card-cold-start) 0%, var(--card-cold-end) 100%);
+            color: var(--text-on-accent);
+        }
+
+        .zone-card.heating-medium {
+            background: linear-gradient(135deg, var(--card-medium-start) 0%, var(--card-medium-end) 100%);
+            color: var(--text-on-accent);
+        }
+
+        .zone-card.heating-hot {
+            background: linear-gradient(135deg, var(--card-hot-start) 0%, var(--card-hot-end) 100%);
+            color: var(--text-on-accent);
+        }
+
+        .zone-card.cooling-medium {
+            background: linear-gradient(135deg, var(--card-cooling-start) 0%, var(--card-cooling-end) 100%);
+            color: var(--text-on-accent);
+        }
+
+        .zone-card.cooling-freeze {
+            background: linear-gradient(135deg, var(--card-freeze-start) 0%, var(--card-freeze-end) 100%);
+            color: var(--text-on-accent);
+        }
+
+        .zone-card.off {
+            background: var(--card-off-bg);
+            color: var(--card-off-text);
+        }
+
+        .zone-temp {
+            font-size: 48px;
+            font-weight: 300;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .zone-temp-decimal {
+            font-size: 32px;
+            font-weight: 300;
+        }
+
+        .zone-temp-unit {
+            font-size: 24px;
+            vertical-align: super;
+        }
+
+        .zone-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .zone-status {
+            font-size: 12px;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .zone-humidity {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 3px;
+        }
+
+        .zone-comfort {
+            font-size: 11px;
+            opacity: 0.9;
+            margin-top: 3px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .zone-status::before {
+            content: '\25BC';
+            font-size: 10px;
+        }
+
+        .flame-icon {
+            font-size: 24px;
+            animation: flicker 2s infinite alternate;
+        }
+        
+        .window-toggle {
+            background: none;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+            line-height: 1;
+            transition: border-color 0.4s; 
+        }
+
+        .window-toggle:hover {
+            border-color: var(--accent);
+            transform: translateY(1.5px) translateX(1.5px) scale(0.94);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+
+        .window-icon {
+            height: 30px;
+        }
+
+        .zone-activity-icons {
+            display: flex;
+            position: absolute;
+            top: 16px;
+            flex-direction: column;
+            align-items: center;
+            align-self: flex-end; 
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(0.7); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--modal-overlay);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-modal);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            color: var(--text-primary);
+        }
+
+        .modal-header {
+            margin-bottom: 10px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 400;
+            margin-bottom: 10px;
+        }
+
+        .modal-temp {
+            font-size: 48px;
+            font-weight: 300;
+            color: var(--accent);
+        }
+
+        .control-group {
+            margin-bottom: 5px;
+        }
+
+        .control-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .temp-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .temp-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            background: var(--bg-modal);
+            color: var(--accent);
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .temp-button:hover {
+            background: var(--accent);
+            color: var(--text-on-accent);
+        }
+
+        .temp-display {
+            font-size: 42px;
+            font-weight: 300;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-button {
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-modal);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .mode-button:hover {
+            border-color: var(--accent);
+        }
+
+        .mode-button.active {
+            border-color: var(--accent);
+            background: var(--bg-accent-subtle);
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--text-on-accent);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--btn-secondary-bg);
+            color: var(--btn-secondary-text);
+        }
+
+        .btn-secondary:hover {
+            background: var(--btn-secondary-bg-hover);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .error {
+            background: var(--bg-error);
+            color: var(--text-error);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .error.success {
+            background: var(--bg-success);
+            color: var(--text-success);
+        }
+
+        .battery-low {
+            color: var(--battery-low);
+            font-size: 12px;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+        
+        .status-bar {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-item {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .status-value {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .cloud-connected { color: var(--cloud-connected); }
+        .cloud-pending { color: var(--accent-pending); }
+        .cloud-disabled { color: var(--cloud-disabled); }
+
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            margin-top: 40px;
+            border-top: 1px solid var(--border-light);
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.2s;
+        }
+
+        .footer a:hover {
+            color: var(--text-secondary);
+        }
+
+        .footer .version-info {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .footer .version-info a {
+            color: var(--accent);
+        }
+
+        .footer .version-info a:hover {
+            color: var(--accent-hover);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--border-light);
+            margin: 0 0 20px 0;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .tab-button:hover {
+            color: var(--accent);
+        }
+
+        .tab-button.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            font-weight: 500;
+        }
+
+        .tab-content {
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* History */
+        .history-controls {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .history-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .history-error {
+            color: var(--text-error);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+    </style>
+    <svg aria-hidden="true" style="display:none;" id="svgdefs" version="2" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <symbol id="window-open" viewBox="0 0 64 64" fill="none"  stroke="currentColor" stroke-width="2.5" 
+                stroke-linecap="round" stroke-linejoin="round" role="img">
+                <rect x="9" y="9" width="46" height="40" rx="2" stroke="SandyBrown" stroke-width="5"/>
+                <rect x="7" y="7" width="50" height="44" rx="3"/>
+                <rect x="12" y="12" width="40" height="34" rx="2"/>
+                <!-- Left glass + frame -->
+                <path d="M12 12 L24 16 L24 40 L12 46 Z" fill="blue" style="fill-opacity:0.4"/>
+                <line x1="14" y1="29" x2="24" y2="29"/>
+                <!-- Right glass + frame -->
+                <path d="M52 12 L40 16 L40 40 L52 46 Z" fill="blue" style="fill-opacity:0.4"/>
+                <line x1="40" y1="29" x2="50" y2="29"/>
+                <!-- Hinges -->
+                <line x1="12" y1="18" x2="14" y2="19"/>
+                <line x1="12" y1="40" x2="14" y2="39"/>
+                <line x1="52" y1="18" x2="50" y2="19"/>
+                <line x1="52" y1="40" x2="50" y2="39"/>
+                <!-- Windowsill -->
+                <line x1="4" y1="52" x2="60" y2="52"/>
+                <line x1="4" y1="53" x2="60" y2="53"/>
+            </symbol>
+            <symbol id="window-closed" viewBox="0 0 64 64"  fill="none"  stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round" role="img">
+                <!-- Outer wall/frame -->
+                <rect x="9" y="9" width="46" height="40" rx="2" stroke="SandyBrown" stroke-width="5"/>
+                <rect x="7" y="7" width="50" height="44" rx="3"/>
+                <rect x="12" y="12" width="40" height="34" rx="2"  fill="blue" style="fill-opacity:0.4"/>
+                <!-- Glass bars -->
+                <line x1="12" y1="12" x2="12" y2="46"/>
+                <line x1="14" y1="29" x2="50" y2="29"/>
+                <line x1="32" y1="13" x2="32" y2="45" stroke-width="4"/>
+                <line x1="52" y1="12" x2="52" y2="46"/>
+                <!-- Hinges -->
+                <line x1="12" y1="19" x2="16" y2="19"/>
+                <line x1="12" y1="39" x2="16" y2="39"/>
+                <line x1="52" y1="19" x2="48" y2="19"/>
+                <line x1="52" y1="39" x2="48" y2="39"/>
+                <!-- Windowsill -->
+                <line x1="4" y1="52" x2="60" y2="52"/>
+                <line x1="4" y1="53" x2="60" y2="53"/>
+            </symbol>
+            <symbol id="window-disabled" viewBox="0 0 64 64" fill="none"  stroke="currentColor" stroke-width="2.5" 
+                stroke-linecap="round" stroke-linejoin="round" role="img">
+                <rect x="9" y="9" width="46" height="40" rx="2" stroke="SandyBrown" stroke-width="5"/>
+                <rect x="7" y="7" width="50" height="44" rx="3"/>
+                <rect x="12" y="12" width="40" height="34" rx="2"/>
+                <!-- Left glass + frame -->
+                <path d="M12 12 L24 16 L24 40 L12 46 Z" fill="blue" style="fill-opacity:0.4"/>
+                <line x1="14" y1="29" x2="24" y2="29"/>
+                <!-- Right glass + frame -->
+                <path d="M52 12 L40 16 L40 40 L52 46 Z" fill="blue" style="fill-opacity:0.4"/>
+                <line x1="40" y1="29" x2="50" y2="29"/>
+                <!-- Hinges -->
+                <line x1="12" y1="18" x2="14" y2="19"/>
+                <line x1="12" y1="40" x2="14" y2="39"/>
+                <line x1="52" y1="18" x2="50" y2="19"/>
+                <line x1="52" y1="40" x2="50" y2="39"/>
+                <!-- Windowsill -->
+                <line x1="4" y1="52" x2="60" y2="52"/>
+                <line x1="4" y1="53" x2="60" y2="53"/>
+                <!-- Red cross to indicate disabled -->
+                <line x1="4" y1="4" x2="60" y2="56" stroke="var(--text-error)" stroke-width="7" />
+                <line x1="4" y1="56" x2="60" y2="4" stroke="var(--text-error)" stroke-width="7" />
+            </symbol>
+            <symbol id="resume-schedule" viewBox="0 0 32 32" fill="none"  stroke="currentColor" stroke-width="0" 
+                stroke-linecap="round" stroke-linejoin="round" role="img">
+                <!-- Calendar frame -->
+                <rect x="4" y="6" width="25" height="22" rx="3" stroke="currentColor" stroke-width="2" fill="none" />
+
+                <!-- Calendar top bar -->
+                <rect x="4" y="6" width="25" height="6" fill="blue" style="fill-opacity:0.4" />
+
+                <!-- Calendar rings -->
+                <line x1="9" y1="4" x2="9" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <line x1="14" y1="4" x2="14" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <line x1="19" y1="4" x2="19" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <line x1="24" y1="4" x2="24" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+
+                <!-- Calendar days -->
+                <rect x="7"    y="14" width="5.5" height="4" rx="1" fill="currentColor" opacity="0.15"/>
+                <rect x="13.5" y="14" width="5.5" height="4" rx="1" fill="currentColor" opacity="0.15"/>
+                <rect x="20"   y="14" width="5.5" height="4" rx="1" fill="currentColor" opacity="0.15"/>
+                <rect x="7"    y="20" width="5.5" height="4" rx="1" fill="blue" opacity="0.15"/>
+                <rect x="13.5" y="20" width="5.5" height="4" rx="1" fill="currentColor" opacity="0.15"/>
+                <rect x="20"   y="20" width="5.5" height="4" rx="1" fill="currentColor" opacity="0.15"/>
+
+                <!-- resume symbol -->
+                <g transform="translate(10,13) scale(0.8)">
+                    <path d="M6 7L7 6L4.70711 3.70711L5.19868 3.21553C5.97697 2.43724 7.03256 2 8.13323 2C11.361 2 14 4.68015 14 7.93274C14 11.2589 11.3013 14 8 14C6.46292 14 4.92913 13.4144 3.75736 12.2426L2.34315 13.6569C3.90505 15.2188 5.95417 16 8 16C12.4307 16 16 12.3385 16 7.93274C16 3.60052 12.4903 0 8.13323 0C6.50213 0 4.93783 0.647954 3.78447 1.80132L3.29289 2.29289L1 0L0 1V7H6Z"
+                        fill="var(--text-primary)"/>
+                </g>
+            </symbol>
+            <symbol id="pause-schedule" viewBox="0 0 32 32" fill="none"  stroke="currentColor" stroke-width="0" 
+                stroke-linecap="round" stroke-linejoin="round" role="img">
+                <!-- Calendar frame -->
+                <rect x="4" y="6" width="25" height="22" rx="3" stroke="currentColor" stroke-width="2" fill="none" />
+
+                <!-- Calendar top bar -->
+                <rect x="4" y="6" width="25" height="6" fill="blue" style="fill-opacity:0.4" />
+
+                <!-- Calendar rings -->
+                <line x1="9" y1="4" x2="9" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <line x1="14" y1="4" x2="14" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <line x1="19" y1="4" x2="19" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <line x1="24" y1="4" x2="24" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+
+                <!-- Calendar days -->
+                <rect x="7"    y="14" width="5.5" height="4" rx="1" fill="currentColor" opacity="0.25"/>
+                <rect x="13.5" y="14" width="5.5" height="4" rx="1" fill="currentColor" opacity="0.25"/>
+                <rect x="20"   y="14" width="5.5" height="4" rx="1" fill="currentColor" opacity="0.25"/>
+                <rect x="7"    y="20" width="5.5" height="4" rx="1" fill="red" opacity="0.25"/>
+                <rect x="13.5" y="20" width="5.5" height="4" rx="1" fill="currentColor" opacity="0.25"/>
+                <rect x="20"   y="20" width="5.5" height="4" rx="1" fill="currentColor" opacity="0.25"/>
+
+                <!-- stand-by symbol -->
+                <line x1="16.5" y1="11" x2="16.5" y2="15" stroke="var(--text-primary)" stroke-width="2" stroke-linecap="round" />
+                <path d="M13.5 13 A6.2 6.2 0 1 0 19.5 13" stroke="var(--text-primary)" stroke-width="2" stroke-linecap="round" fill="none" />
+            </symbol>
+        </defs>
+    </svg>
+
+</head>
+<body>
+    <div id="setup-panel" class="container" style="max-width:640px; display:none;">
+        <div class="card">
+            <h1>First-time setup</h1>
+            <p>Enter the IP address and HomeKit PIN from your Tado bridge.</p>
+            <label for="setup-bridge-ip">Bridge IP address</label>
+            <input id="setup-bridge-ip" type="text" placeholder="192.168.1.100" autocomplete="off">
+            <label for="setup-pin">HomeKit PIN</label>
+            <input id="setup-pin" type="text" placeholder="123-45-678" inputmode="numeric" autocomplete="off">
+            <button class="btn btn-primary" id="setup-submit">Connect bridge</button>
+            <p id="setup-message" role="status"></p>
+            <pre id="setup-error" style="white-space:pre-wrap;color:var(--text-error);"></pre>
+            <pre id="setup-logs" style="white-space:pre-wrap;max-height:220px;overflow:auto;"></pre>
+        </div>
+    </div>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1 id="home-name">Tado Local</h1>
+            </div>
+            
+            <div class="header-center">
+                <button class="schedule-button" id="schedule-all-off" title="Turn Tado SMART schedule off for all zones, at the cost of 1 API call" aria-label="Turn Tado SMART schedule off for all zones, at the cost of 1 API call">
+                    <svg width="32" height="32" version="2.0" style="color: gray"><use id="schedule-off-icon" href="#pause-schedule" /></svg>
+                    <div class="schedule-button-label">
+                       <h4>Schedule off</h4>
+                       <p class="schedule-warning">WRN: 1 API call</p>
+                    </div>
+                </button>
+                <button class="schedule-button" id="schedule-all-on" title="Resume for all zones to Tado SMART schedule, at the cost of 1 API call" aria-label="Resume for all zones to Tado SMART schedule, at the cost of 1 API call">
+                    <svg width="32" height="32" version="2.0" style="color: gray"><use id="schedule-off-icon" href="#resume-schedule" /></svg>
+                    <div class="schedule-button-label">
+                         <h4>Resume All</h4>
+                         <p class="schedule-warning">WRN: 1 API call</p>
+                       </div>
+                </button>
+            </div>
+
+            <div class="header-right">
+                <button class="window-toggle" id="window-toggle" title="Toggle show open window-status" aria-label="Toggle show open window-status">
+                    <svg width="25" height="25" version="2.0" style="color: gray"><use id="window-toggle-icon" href="#window-open" /></svg>
+                </button>
+                <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+            </div>  
+        </div>
+        
+        <div class="status-bar" id="status-bar" style="display: none;">
+            <div class="status-item">
+                <span class="status-value" id="zone-count">-</span> zones
+            </div>
+            <div class="status-item">
+                Cloud: <span class="status-value" id="cloud-status">-</span>
+            </div>
+            <div class="status-item">
+                Last update: <span class="status-value" id="last-update">-</span>
+            </div>
+        </div>
+
+        <div id="error-message" class="error" style="display: none;"></div>
+        
+        <div class="zones-grid" id="zones-grid">
+            <div class="loading">Loading zones...</div>
+        </div>
+
+        <div class="footer">
+            <div>
+                <a href="/api">API Details</a>
+                <a href="/docs">API Docs</a>
+            </div>
+            <div class="version-info">
+                Powered by <a href="https://github.com/ampscm/TadoLocal" target="_blank" rel="noopener">Tado Local</a> <span id="version-number">...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-zone-name">Zone</h2>
+                <div class="modal-temp" id="modal-current-temp">--°</div>
+                <div id="modal-battery-warning" class="battery-low" style="display: none;">⚠️ Low battery</div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-button active" data-tab="controls">Controls</button>
+                <button class="tab-button" data-tab="history">History</button>
+            </div>
+
+            <!-- Controls Tab -->
+            <div class="tab-content" id="tab-controls">
+                <div class="control-group">
+                    <label class="control-label">Target Temperature</label>
+                    <div class="temp-control">
+                        <button class="temp-button" id="temp-down">−</button>
+                        <div class="temp-display" id="temp-display">20°</div>
+                        <button class="temp-button" id="temp-up">+</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Tado Smart Schedule (WRN: 1 API call)</label>
+                    <div class="mode-buttons">
+                        <button class="mode-button" id="schedule-on" data-mode="off">Resume</button>
+                        <button class="mode-button" id="schedule-off" data-mode="heat">Off</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">Mode</label>
+                    <div class="mode-buttons">
+                        <button class="mode-button" id="mode-heat" data-mode="heat">Heat</button>
+                        <button class="mode-button" id="mode-cool" data-mode="cool">Cool</button>
+                        <button class="mode-button" id="mode-off" data-mode="off">Off</button>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="btn-cancel">Cancel</button>
+                    <button class="btn btn-primary" id="btn-apply">Apply</button>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div class="tab-content" id="tab-history" style="display: none;">
+                <div class="history-controls">
+                    <select id="history-period" class="history-select">
+                        <option value="24">Last 24 hours</option>
+                        <option value="168">Last 7 days</option>
+                        <option value="720">Last 30 days</option>
+                        <option value="8760">Last year</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <canvas id="history-chart"></canvas>
+                </div>
+                <div id="history-loading" class="loading" style="display: none;">Loading history...</div>
+                <div id="history-error" class="history-error" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const setupPanel = document.getElementById('setup-panel');
+        const setupSubmit = document.getElementById('setup-submit');
+        const setupMessage = document.getElementById('setup-message');
+        const setupError = document.getElementById('setup-error');
+        const setupLogs = document.getElementById('setup-logs');
+        const mainContainer = document.querySelector('body > .container:not(#setup-panel)');
+        async function checkSetup() {
+            try {
+                const response = await fetch('/setup/status');
+                const state = await response.json();
+                const needsSetup = ['waiting', 'pairing', 'error'].includes(state.status);
+                setupPanel.style.display = needsSetup ? 'block' : 'none';
+                mainContainer.style.display = needsSetup ? 'none' : 'block';
+                setupMessage.textContent = state.message || '';
+                setupError.textContent = state.error || '';
+                setupLogs.textContent = (state.logs || []).join('\n');
+                setupSubmit.disabled = state.status === 'pairing';
+                if (state.status === 'pairing') setTimeout(checkSetup, 1500);
+            } catch (error) {
+                setupPanel.style.display = 'block';
+                setupMessage.textContent = 'Waiting for the server…';
+            }
+        }
+        setupSubmit.addEventListener('click', async () => {
+            setupError.textContent = '';
+            const bridge_ip = document.getElementById('setup-bridge-ip').value.trim();
+            const pin = document.getElementById('setup-pin').value.trim();
+            if (!bridge_ip || !pin) { setupMessage.textContent = 'Enter both values.'; return; }
+            await fetch('/setup/pair', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({bridge_ip, pin}) });
+            checkSetup();
+        });
+        checkSetup();
+
+    let zones = [];
+    let currentZone = null;
+    let tempValue = 20;
+    let modeValue = 'heat';
+    let eventSource = null;
+    let chartJsLoaded = false;
+    let historyChart = null;
+    let lastCloudAuthState = null;
+    let statusPollInterval = null;
+    let showWindowStatus = "open-only"; // "show", "hide", "open-only"
+
+        // Lazy load Chart.js and date adapter when history tab is first opened
+        async function loadChartJs() {
+            if (chartJsLoaded) return true;
+            
+            try {
+                // Load Chart.js
+                const chartScript = document.createElement('script');
+                chartScript.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+                chartScript.async = true;
+                
+                await new Promise((resolve, reject) => {
+                    chartScript.onload = resolve;
+                    chartScript.onerror = reject;
+                    document.head.appendChild(chartScript);
+                });
+                
+                // Load date adapter for time scales
+                const adapterScript = document.createElement('script');
+                adapterScript.src = 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js';
+                adapterScript.async = true;
+                
+                await new Promise((resolve, reject) => {
+                    adapterScript.onload = resolve;
+                    adapterScript.onerror = reject;
+                    document.head.appendChild(adapterScript);
+                });
+                
+                chartJsLoaded = true;
+                return true;
+            } catch (error) {
+                console.error('Failed to load Chart.js:', error);
+                return false;
+            }
+        }
+
+        // Load and display history
+        async function loadHistory(zoneId, hours = 24) {
+            const loadingEl = document.getElementById('history-loading');
+            const errorEl = document.getElementById('history-error');
+            const canvas = document.getElementById('history-chart');
+            
+            // Show loading
+            loadingEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            canvas.style.display = 'none';
+            
+            try {
+                // Ensure Chart.js is loaded
+                if (!chartJsLoaded) {
+                    const loaded = await loadChartJs();
+                    if (!loaded) throw new Error('Failed to load Chart.js library');
+                }
+                
+                // Calculate time range
+                const endTime = Math.floor(Date.now() / 1000);
+                const startTime = endTime - (hours * 3600);
+                
+                // Fetch history data
+                const response = await fetch(`/zones/${zoneId}/history?start_time=${startTime}&end_time=${endTime}&limit=1000`);
+                if (!response.ok) throw new Error('Failed to load history');
+                
+                const data = await response.json();
+                
+                if (!data.history || data.history.length === 0) {
+                    errorEl.textContent = 'No history data available for this period';
+                    errorEl.style.display = 'block';
+                    loadingEl.style.display = 'none';
+                    return;
+                }
+                
+                // Transform data for step chart (changes only!)
+                const tempData = [];
+                const targetTempData = [];
+                const heatingActiveData = [];
+                const humidityData = [];
+                const labels = [];
+                
+                // Reverse to get chronological order (API returns DESC)
+                const history = data.history.reverse();
+                
+                for (const record of history) {
+                    const timestamp = new Date(record.timestamp);
+                    const state = record.state;
+                    
+                    labels.push(timestamp);
+                    tempData.push(state.cur_temp_c);
+                    
+                    // Only show target temp when mode != 0 (heating/cooling enabled)
+                    if (state.mode !== 0 && state.mode !== '0') {
+                        targetTempData.push(state.target_temp_c);
+                    } else {
+                        targetTempData.push(null);
+                    }
+                    
+                    // Track when heating is active (for background shading)
+                    if (state.cur_heating === 1 || state.cur_heating === 2) {
+                        heatingActiveData.push(1);  // Any value for shading
+                    } else {
+                        heatingActiveData.push(null);
+                    }
+                    
+                    // Add humidity if available (note: field name is hum_perc, not cur_humidity_pct)
+                    humidityData.push(state.hum_perc !== undefined && state.hum_perc !== null ? state.hum_perc : null);
+                }
+                
+                // Destroy existing chart if any
+                if (historyChart) {
+                    historyChart.destroy();
+                    historyChart = null;
+                }
+                
+                // Create step chart
+                canvas.style.display = 'block';
+                loadingEl.style.display = 'none';
+                
+                const ctx = canvas.getContext('2d');
+                const styles = getComputedStyle(document.documentElement);
+                const chartColors = {
+                    temp: styles.getPropertyValue('--chart-temp').trim(),
+                    tempBg: styles.getPropertyValue('--chart-temp-bg').trim(),
+                    target: styles.getPropertyValue('--chart-target').trim(),
+                    targetBg: styles.getPropertyValue('--chart-target-bg').trim(),
+                    humidity: styles.getPropertyValue('--chart-humidity').trim(),
+                    humidityBg: styles.getPropertyValue('--chart-humidity-bg').trim(),
+                    heatingBg: styles.getPropertyValue('--chart-heating-bg').trim(),
+                    grid: styles.getPropertyValue('--chart-grid').trim(),
+                    text: styles.getPropertyValue('--chart-text').trim()
+                };
+
+                historyChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Heating Active (background)',
+                                data: heatingActiveData,
+                                backgroundColor: chartColors.heatingBg,
+                                borderColor: 'transparent',
+                                stepped: 'before',
+                                borderWidth: 0,
+                                pointRadius: 0,
+                                fill: 'origin',
+                                yAxisID: 'y2',
+                                order: 10
+                            },
+                            {
+                                label: 'Current Temp',
+                                data: tempData,
+                                borderColor: chartColors.temp,
+                                backgroundColor: chartColors.tempBg,
+                                stepped: 'before',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                fill: false,
+                                yAxisID: 'y',
+                                order: 2
+                            },
+                            {
+                                label: 'Target Temp',
+                                data: targetTempData,
+                                borderColor: chartColors.target,
+                                backgroundColor: chartColors.targetBg,
+                                stepped: 'before',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                fill: false,
+                                yAxisID: 'y',
+                                spanGaps: false,
+                                order: 1
+                            },
+                            {
+                                label: 'Humidity',
+                                data: humidityData,
+                                borderColor: chartColors.humidity,
+                                backgroundColor: chartColors.humidityBg,
+                                stepped: 'before',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                fill: false,
+                                yAxisID: 'y1',
+                                order: 3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    color: chartColors.text,
+                                    filter: function(item) {
+                                        return !item.text.includes('background');
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        if (context.dataset.label && context.dataset.label.includes('background')) {
+                                            return null;
+                                        }
+
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            if (context.dataset.yAxisID === 'y1') {
+                                                label += context.parsed.y.toFixed(1) + '%';
+                                            } else {
+                                                label += context.parsed.y.toFixed(1) + '°C';
+                                            }
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                time: {
+                                    unit: hours <= 48 ? 'hour' : hours <= 720 ? 'day' : 'week',
+                                    displayFormats: {
+                                        hour: 'MMM d, HH:mm',
+                                        day: 'MMM d',
+                                        week: 'MMM d'
+                                    }
+                                },
+                                ticks: {
+                                    color: chartColors.text,
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                },
+                                grid: {
+                                    color: chartColors.grid
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'Temperature (\u00B0C)',
+                                    color: chartColors.text
+                                },
+                                ticks: {
+                                    color: chartColors.text
+                                },
+                                grid: {
+                                    color: chartColors.grid
+                                },
+                                beginAtZero: false
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'Humidity (%)',
+                                    color: chartColors.text
+                                },
+                                ticks: {
+                                    color: chartColors.text
+                                },
+                                min: 0,
+                                max: 100,
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            },
+                            y2: {
+                                type: 'linear',
+                                display: false,
+                                min: 0,
+                                max: 1,
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                errorEl.textContent = 'Failed to load history: ' + error.message;
+                errorEl.style.display = 'block';
+                loadingEl.style.display = 'none';
+                console.error('History error:', error);
+            }
+        }
+
+        // Load zones
+        async function loadZones() {
+            try {
+                const response = await fetch('/zones');
+                if (!response.ok) throw new Error('Failed to load zones');
+                
+                const data = await response.json();
+                zones = data.zones;
+                
+                // Update home name and page title if available (use first home)
+                if (data.homes && data.homes.length > 0 && data.homes[0].name) {
+                    document.getElementById('home-name').textContent = data.homes[0].name;
+                    document.title = `${data.homes[0].name} - Tado Local`;
+                }
+                
+                renderZones();
+                updateStatus(data);
+            } catch (error) {
+                showError('Failed to load zones: ' + error.message);
+            }
+        }
+
+        // Load status
+        async function loadStatus() {
+            try {
+                const response = await fetch('/status');
+                if (!response.ok) return;
+                
+                const data = await response.json();
+                
+                // Update version in footer
+                if (data.version) {
+                    document.getElementById('version-number').textContent = data.version;
+                }
+                
+                // Update cloud status
+                const cloudStatusEl = document.getElementById('cloud-status');
+                cloudStatusEl.className = 'status-value';
+                if (data.cloud_api) {
+                    if (data.cloud_api.authenticated) {
+                        cloudStatusEl.textContent = 'Connected';
+                        cloudStatusEl.classList.add('cloud-connected');
+                    } else if (data.cloud_api.authentication_required) {
+                        if (data.cloud_api.verification_uri) {
+                            cloudStatusEl.innerHTML = `<a href="${data.cloud_api.verification_uri}" target="_blank" class="cloud-pending">Authenticate</a>`;
+                        } else {
+                            cloudStatusEl.textContent = 'Not authenticated';
+                            cloudStatusEl.classList.add('cloud-pending');
+                        }
+                    } else {
+                        cloudStatusEl.textContent = 'Disabled';
+                        cloudStatusEl.classList.add('cloud-disabled');
+                    }
+                } else {
+                    cloudStatusEl.textContent = 'Unavailable';
+                    cloudStatusEl.classList.add('cloud-disabled');
+                }
+
+                // Detect cloud authentication change
+                const cloudAuth = data.cloud_api && data.cloud_api.authenticated;
+                const cloudAuthRequired = data.cloud_api && data.cloud_api.authentication_required;
+                // Only show success if authentication was required and is now complete
+                if (lastCloudAuthState === false && cloudAuth === true && cloudAuthRequired) {
+                    showSuccess('Cloud authentication successful!');
+                    loadZones(); // Reload zones after cloud sync
+                    // Stop polling status
+                    if (statusPollInterval) {
+                        clearInterval(statusPollInterval);
+                        statusPollInterval = null;
+                    }
+                }
+                lastCloudAuthState = cloudAuth;
+            } catch (error) {
+                console.error('Failed to load status:', error);
+            }
+        }
+
+        function updateStatus(data) {
+            const statusBar = document.getElementById('status-bar');
+            statusBar.style.display = 'flex';
+            
+            document.getElementById('zone-count').textContent = data.count || 0;
+            
+            const now = new Date();
+            document.getElementById('last-update').textContent = now.toLocaleTimeString();
+        }
+
+        // Calculate dew point using Magnus formula
+        function calculateDewPoint(temp, humidity) {
+            if (temp === null || temp === undefined || humidity === null || humidity === undefined) {
+                return null;
+            }
+            const a = 17.27;
+            const b = 237.7;
+            const alpha = ((a * temp) / (b + temp)) + Math.log(humidity / 100.0);
+            const dewPoint = (b * alpha) / (a - alpha);
+            return Math.round(dewPoint * 10) / 10; // Round to 1 decimal
+        }
+
+        // Determine comfort level based on temperature, humidity, and dew point
+        function getComfortLevel(temp, humidity, dewPoint) {
+            if (temp === null || humidity === null || dewPoint === null) {
+                return { status: 'unknown', icon: '❓', label: 'Unknown' };
+            }
+
+            // Comfort levels considering both dew point AND humidity percentage
+            // High humidity (>70%) at any temperature is uncomfortable
+            if (humidity > 70) {
+                if (humidity > 85) {
+                    return { status: 'oppressive', icon: '🥵', label: 'Very Humid' };
+                } else if (humidity > 75) {
+                    return { status: 'unpleasant', icon: '😓', label: 'Humid' };
+                } else {
+                    return { status: 'uncomfortable', icon: '😐', label: 'Humid' };
+                }
+            }
+            
+            // Low humidity (<30%) is dry
+            if (humidity < 30) {
+                return { status: 'dry', icon: '🏜️', label: 'Dry' };
+            }
+            
+            // For normal humidity range (30-70%), use dew point for comfort
+            if (dewPoint < 10) {
+                return { status: 'comfortable', icon: '😊', label: 'Comfortable' };
+            } else if (dewPoint >= 10 && dewPoint < 13) {
+                return { status: 'comfortable', icon: '😊', label: 'Comfortable' };
+            } else if (dewPoint >= 13 && dewPoint < 16) {
+                return { status: 'comfortable', icon: '😊', label: 'Comfortable' };
+            } else if (dewPoint >= 16 && dewPoint < 18) {
+                return { status: 'ok', icon: '🙂', label: 'OK' };
+            } else if (dewPoint >= 18 && dewPoint < 21) {
+                return { status: 'uncomfortable', icon: '😐', label: 'Uncomfortable' };
+            } else if (dewPoint >= 21 && dewPoint < 24) {
+                return { status: 'unpleasant', icon: '😓', label: 'Humid' };
+            } else {
+                return { status: 'oppressive', icon: '🥵', label: 'Very Humid' };
+            }
+        }
+
+        function renderZones() {
+            const grid = document.getElementById('zones-grid');
+            
+            if (zones.length === 0) {
+                grid.innerHTML = '<div class="loading">No zones found</div>';
+                return;
+            }
+
+            grid.innerHTML = zones.map(zone => {
+                const state = zone.state || {};
+                const temp = state.cur_temp_c;
+                const humidity = state.hum_perc;
+                const target = state.target_temp_c || '--';
+                const mode = state.mode || 0;
+                const curHeating = state.cur_heating || 0;
+                const batteryLow = state.battery_low;
+
+                let windowStatus = "hide";
+                if (state.window_open !== null && state.window_open !== undefined) {
+                    windowStatus = state.window_open ?  "open" : "closed";
+                }
+                
+                // Format temperature with one decimal, split for styling
+                let tempHtml = '--';
+                if (temp !== null && temp !== undefined) {
+                    const tempStr = temp.toFixed(1);
+                    const parts = tempStr.split('.');
+                    tempHtml = `${parts[0]}<span class="zone-temp-decimal">.${parts[1]}</span>`;
+                }
+                
+                let cardClass = 'zone-card';
+                let statusText = '';
+                
+                if (mode === 0) {
+                    // Off / Frost protection
+                    cardClass += ' off';
+                    statusText = 'Off';
+                } else {
+                    // Mode is on (heating enabled)
+                    // Color by actual current temperature regardless of heating status
+                    if (temp !== null && temp !== undefined && temp < 17) {
+                        cardClass += (mode === 2 ? ' cooling-freeze' : ' heating-cold');
+                    } else if (temp !== null && temp !== undefined && temp <= 22) {
+                        cardClass += (mode === 2 ? ' cooling-medium' : ' heating-medium');
+                    } else if (temp !== null && temp !== undefined) {
+                        cardClass += (mode === 2 ? ' cooling-medium' : ' heating-hot');
+                    } else {
+                        // No temperature data, default to medium
+                        cardClass += (mode === 2 ? ' cooling-medium' : ' heating-medium');
+                    }
+                    
+                    // Status text depends on whether actively heating/cooling
+                    if (curHeating === 1) {
+                        statusText = `Heating to ${target}°`;
+                    } else if (curHeating === 2) {
+                        statusText = `Cooling to ${target}°`;
+                    } else {
+                        statusText = `Target ${target}°`;
+                    }
+                }
+
+                // Show icon based on cur_heating state
+                // 0 = off (no icon), 1 = heating (flame), 2 = cooling (frost/snowflake)
+                let activityIcon = '';
+                                
+                // Show icon based on window open status if enabled
+                if (windowStatus != "hide") {
+                    let showWindowOpenStatus = windowStatus != "hide" &&
+                        ((showWindowStatus == "show") || (showWindowStatus == "open-only" && windowStatus == "open"));
+                    activityIcon += '<div class="window-icon"' 
+                    activityIcon += (showWindowOpenStatus ? "" : ' style="display: none;"');
+                    activityIcon += '><svg width="40" height="36" version="2.0"><use href="#window-' + (windowStatus == "open" ? "open" : "closed") 
+                    activityIcon += '" /></svg></div>';
+                }
+
+                if (curHeating === 1) {
+                    activityIcon += '<div class="flame-icon">🔥</div>';
+                } else if (curHeating === 2) {
+                    activityIcon += '<div class="flame-icon">❄️</div>';
+                }
+                
+                // Format humidity if available
+                const humidityHtml = (humidity !== null && humidity !== undefined) 
+                    ? `<div class="zone-humidity">Humidity ${humidity}%</div>` 
+                    : '';
+
+                // Calculate dew point and comfort level
+                const dewPoint = calculateDewPoint(temp, humidity);
+                const comfort = getComfortLevel(temp, humidity, dewPoint);
+                const comfortHtml = (dewPoint !== null) 
+                    ? `<div class="zone-comfort">${comfort.icon} ${comfort.label}</div>` 
+                    : '';
+
+                return `
+                    <div class="${cardClass}" data-zone-id="${zone.zone_id}" onclick="openZoneModal(${zone.zone_id})">
+                        <div class="zone-activity-icons">
+                        ${activityIcon}
+                        </div>
+                        <div>
+                            <div class="zone-temp">${tempHtml}<span class="zone-temp-unit">°</span></div>
+                            <div class="zone-name">${zone.name}</div>
+                            <div class="zone-status">${statusText}</div>
+                            ${humidityHtml}
+                            ${comfortHtml}
+                            ${batteryLow ? '<div class="battery-low">⚠️ Low battery</div>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openZoneModal(zoneId) {
+            currentZone = zones.find(z => z.zone_id === zoneId);
+            if (!currentZone) return;
+
+            const state = currentZone.state || {};
+            
+            document.getElementById('modal-zone-name').textContent = currentZone.name;
+            document.getElementById('modal-current-temp').textContent = 
+                `${state.cur_temp_c || '--'}°`;
+            
+            // Show battery warning if needed
+            const batteryWarning = document.getElementById('modal-battery-warning');
+            if (state.battery_low) {
+                batteryWarning.style.display = 'block';
+            } else {
+                batteryWarning.style.display = 'none';
+            }
+            
+            tempValue = state.target_temp_c || 20;
+            modeValue = (state.mode === 0) ? 'off' : ((state.mode === 2) ? 'cool' : 'heat');
+            const coolButton = document.getElementById('mode-cool');
+            if (currentZone.zone_type === "AIR_CONDITIONING") {
+                coolButton.style.display = 'inline-block';
+            } else {
+                coolButton.style.display = 'none';
+            }
+            
+            updateTempDisplay();
+            updateModeButtons();
+            
+            // Reset to controls tab
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('[data-tab="controls"]').classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.getElementById('tab-controls').style.display = 'block';
+            
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() {
+            // Destroy chart when closing modal to free resources
+            if (historyChart) {
+                historyChart.destroy();
+                historyChart = null;
+            }
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function updateTempDisplay() {
+            document.getElementById('temp-display').textContent = `${tempValue}°`;
+        }
+
+        function updateModeButtons() {
+            document.getElementById('mode-heat').classList.toggle('active', modeValue === 'heat');
+            document.getElementById('mode-cool').classList.toggle('active', modeValue === 'cool');
+            document.getElementById('mode-off').classList.toggle('active', modeValue === 'off');
+            document.getElementById('schedule-off').classList.toggle('active', modeValue === 'schedule-off');
+            document.getElementById('schedule-on').classList.toggle('active', modeValue === 'schedule-on');
+        }
+
+        async function applyChanges() {
+            if (!currentZone) return;
+
+            const params = new URLSearchParams();
+            switch (modeValue) {
+                case 'schedule-off':
+                    params.append('heating_enabled', 'false');
+                    params.append('persistant', 'true');
+                    break;
+                case 'schedule-on':
+                    params.append('heating_enabled', 'true');
+                    params.append('persistant', 'true');
+                    break;
+                case 'off':
+                    params.append('temperature', tempValue);
+                    params.append('heating_mode', 0);
+                    break;
+                case 'cool':
+                    params.append('temperature', tempValue);
+                    params.append('heating_mode', 2);
+                    break;
+                default:
+                case 'heat':
+                    params.append('temperature', tempValue);
+                    params.append('heating_mode', 1);
+                    break;
+            }
+
+            try {
+                const response = await fetch(`/zones/${currentZone.zone_id}/set?${params}`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to update zone');
+                }
+
+                closeModal();
+                
+                // Reload zones after a short delay
+                setTimeout(loadZones, 1000);
+            } catch (error) {
+                showError('Failed to update zone: ' + error.message);
+            }
+        }
+
+        async function sendSmartScheduleMode(modeOn) {
+            if (!confirm("Are you sure to switch the schedule " + (modeOn ? "ON" : "OFF") +  " for all zones?\nWARNING: this will cost a Cloud API call")) return;
+
+            const params = new URLSearchParams();
+            params.append('heating_enabled', modeOn ? 'true' : 'false' );
+            params.append('persistant', 'true');
+
+            try {
+                const response = await fetch(`/zones/set?${params}`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to switch smart schedule');
+                }
+                // Reload zones after a short delay
+                setTimeout(loadZones, 1000);
+            } catch (error) {
+                showError('Failed to switch smart schedule: ' + error.message);
+            }
+        }
+
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.className = 'error';
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.className = 'error success';
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Setup Server-Sent Events for live updates
+        function setupEventStream() {
+            // Close existing connection if any
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            eventSource = new EventSource('/events?types=zone');
+            
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.type === 'zone') {
+                        // Update specific zone in our zones array
+                        const zoneIndex = zones.findIndex(z => z.zone_id === data.zone_id);
+                        if (zoneIndex !== -1) {
+                            zones[zoneIndex].state = data.state;
+                            // Re-render zones to show updated state
+                            renderZones();
+                        }
+                    } else if (data.type === 'keepalive') {
+                        // Connection is alive
+                        console.debug('SSE keepalive');
+                    }
+                } catch (error) {
+                    console.error('Error parsing SSE data:', error);
+                }
+            };
+
+            eventSource.onerror = (error) => {
+                console.error('SSE connection error:', error);
+                eventSource.close();
+                
+                // Reconnect after 5 seconds
+                setTimeout(setupEventStream, 5000);
+            };
+
+            eventSource.onopen = () => {
+                console.log('SSE connection established');
+            };
+        }
+
+        // Theme toggle handlers
+        function getEffectiveTheme() {
+            const saved = localStorage.getItem('theme');
+            if (saved) return saved;
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('theme-toggle').textContent = '\u2600\uFE0F';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                document.getElementById('theme-toggle').textContent = '\uD83C\uDF19';
+            }
+            // Rebuild chart if visible so colors update
+            if (historyChart && currentZone) {
+                const hours = parseInt(document.getElementById('history-period').value);
+                loadHistory(currentZone.zone_id, hours);
+            }
+        }
+
+        // Handle Window status toggle
+        function applyWindowStatus() {
+            document.getElementById('window-toggle-icon').setAttribute("href", showWindowStatus == "show" ? '#window-closed' :
+                         (showWindowStatus == "hide" ? '#window-disabled' :'#window-open'));
+            
+            document.querySelectorAll('.window-icon').forEach(icon => {
+                // Show or hide window status icons based on setting, and if "open-only", only show when window is open
+                if (showWindowStatus == "show") {
+                    icon.style.display = 'block';
+                } else if (showWindowStatus == "open-only") {
+                        stat = icon.getElementsByTagName('use')[0].getAttribute("href");
+                        if (stat === '#window-open') {
+                            icon.style.display = 'block';
+                        } else {
+                            icon.style.display = 'none';
+                        }
+                } else {
+                    icon.style.display = 'none';
+                }
+            });
+        }
+
+        // Event listeners
+        document.getElementById('temp-up').addEventListener('click', () => {
+            if (tempValue < 30) {
+                tempValue += 0.5;
+                updateTempDisplay();
+            }
+        });
+
+        document.getElementById('temp-down').addEventListener('click', () => {
+            if (tempValue > 5) {
+                tempValue -= 0.5;
+                updateTempDisplay();
+            }
+        });
+
+        document.getElementById('mode-heat').addEventListener('click', () => {
+            modeValue = 'heat';
+            updateModeButtons();
+        });
+
+        document.getElementById('mode-cool').addEventListener('click', () => {
+            modeValue = 'cool';
+            updateModeButtons();
+        });
+
+        document.getElementById('mode-off').addEventListener('click', () => {
+            modeValue = 'off';
+            updateModeButtons();
+        });
+
+        document.getElementById('schedule-off').addEventListener('click', () => {
+            modeValue = 'schedule-off';
+            updateModeButtons();
+        });
+
+        document.getElementById('schedule-on').addEventListener('click', () => {
+            modeValue = 'schedule-on';
+            updateModeButtons();
+        });
+
+        document.getElementById('schedule-all-on').addEventListener('click', () => {
+            sendSmartScheduleMode(true);
+        });
+
+        document.getElementById('schedule-all-off').addEventListener('click', () => {
+            sendSmartScheduleMode(false);
+        });
+
+        document.getElementById('btn-cancel').addEventListener('click', closeModal);
+        document.getElementById('btn-apply').addEventListener('click', applyChanges);
+
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target.id === 'modal') {
+                closeModal();
+            }
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const tab = e.target.dataset.tab;
+                
+                // Update button states
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                // Show/hide tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                document.getElementById(`tab-${tab}`).style.display = 'block';
+                
+                // Load history when history tab is opened
+                if (tab === 'history' && currentZone) {
+                    const hours = parseInt(document.getElementById('history-period').value);
+                    loadHistory(currentZone.zone_id, hours);
+                }
+            });
+        });
+
+        // History period change
+        document.getElementById('history-period').addEventListener('change', (e) => {
+            if (currentZone) {
+                const hours = parseInt(e.target.value);
+                loadHistory(currentZone.zone_id, hours);
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('modal');
+                if (modal.style.display === 'flex') {
+                    closeModal();
+                }
+            }
+        });
+
+        // Add Window status toggle listener
+        document.getElementById('window-toggle').addEventListener('click', () => {
+            showWindowStatus = showWindowStatus == "hide" ? "show" : showWindowStatus == "show" ? "open-only" : "hide";
+            localStorage.setItem('windowStatus', showWindowStatus);
+            applyWindowStatus();
+        });
+
+        // Init showWindowStatus from localStorage 
+        showWindowStatus = localStorage.getItem('windowStatus'); // 'show', 'hide' or 'open-only'
+        if (!showWindowStatus) {
+            showWindowStatus = 'open-only';  // default to "open-only" if not set
+        }
+        applyWindowStatus();
+
+        // Add theme toggle listener
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const current = getEffectiveTheme();
+            const next = current === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('theme', next);
+            applyTheme(next);
+        });
+
+        // Apply saved theme on load (if any)
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            applyTheme(savedTheme);
+        } else {
+            // Let CSS media query handle it, but set toggle icon correctly
+            document.getElementById('theme-toggle').textContent =
+                window.matchMedia('(prefers-color-scheme: dark)').matches ? '\u2600\uFE0F' : '\uD83C\uDF19';
+        }
+
+        // Initialize
+        loadZones();
+        loadStatus();
+        setupEventStream();
+
+        // Poll status until cloud authentication is successful
+        lastCloudAuthState = false;
+        statusPollInterval = setInterval(() => {
+            if (!lastCloudAuthState) {
+                loadStatus();
+            }
+        }, 5000); // Poll every 5 seconds until authenticated
+
+        // Fallback: Still refresh periodically in case SSE fails
+        setInterval(loadZones, 60000); // Every minute as fallback
+    </script>
+</body>
+</html>

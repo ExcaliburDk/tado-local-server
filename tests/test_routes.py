@@ -1,0 +1,2819 @@
+import pytest
+import sqlite3
+from pathlib import Path
+import tempfile
+from unittest.mock import AsyncMock, Mock
+from fastapi.testclient import TestClient
+from types import SimpleNamespace
+from tado_local.routes import create_app, register_routes
+from tado_local.database import ensure_schema_and_migrate
+
+@pytest.fixture
+def test_db():
+    """Create a temporary SQLite test database with TadoLocal schema."""
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.db') as tmp:
+        db_path = tmp.name
+
+    # Initialize schema using the actual schema function
+    ensure_schema_and_migrate(db_path)
+
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # Insert sample data
+    cursor.execute("INSERT INTO tado_homes (tado_home_id, name, timezone, temperature_unit) VALUES (1, 'My Home', 'Europe/Amsterdam', 'CELSIUS')")
+
+    cursor.execute("INSERT INTO zones (tado_zone_id, tado_home_id, name, zone_type, leader_device_id, order_id, window_open_time, window_rest_time) VALUES (100, 1, 'Living Room', 'HEATING', 1, 1, 33, 66)")
+    cursor.execute("INSERT INTO zones (tado_zone_id, tado_home_id, name, zone_type, leader_device_id, order_id, window_open_time, window_rest_time) VALUES (101, 1, 'Bedroom', 'HOT_WATER', 2, 2, 10, 25)")
+    cursor.execute("INSERT INTO zones (tado_zone_id, tado_home_id, name, zone_type, leader_device_id, order_id, window_open_time, window_rest_time) VALUES (102, 1, 'Kitchen', 'HEATING', NULL, 3, 20, 30)")
+    cursor.execute("INSERT INTO zones (tado_zone_id, tado_home_id, name, zone_type, leader_device_id, order_id, window_open_time, window_rest_time) VALUES (103, 1, 'Office', 'AIR_CONDITIONING', 5, 4, 20, 30)")
+    cursor.execute("INSERT INTO zones (tado_zone_id, tado_home_id, name, zone_type, leader_device_id, order_id) VALUES (104, 1, 'Attick', 'HEATING', 6, 5)")
+
+    cursor.execute("INSERT INTO devices (serial_number, aid, zone_id, tado_zone_id, device_type, name, model, manufacturer, firmware_version, battery_state, is_zone_leader, is_circuit_driver) VALUES ('SN001', 1, 1, 100, 'thermostat', 'Living Room Thermostat', 'RU01', 'Tado', '1.45', 'NORMAL', 1, 1)")
+    cursor.execute("INSERT INTO devices (serial_number, aid, zone_id, tado_zone_id, device_type, name, model, manufacturer, firmware_version, battery_state, is_zone_leader, is_circuit_driver) VALUES ('SN002', 2, 2, 101, 'bridge', 'Bedroom Bridge', 'RU01', 'Tado', '1.45', 'NORMAL', 1, 1)")
+    cursor.execute("INSERT INTO devices (serial_number, aid, zone_id, tado_zone_id, device_type, name, model, manufacturer, firmware_version, battery_state, is_zone_leader, is_circuit_driver) VALUES ('SN003', 3, 3, 102, 'thermostat', 'Kitchen Thermostat', 'RB01', 'Tado', '2.10', 'LOW', 0, 1)")
+    cursor.execute("INSERT INTO devices (serial_number, aid, zone_id, tado_zone_id, device_type, name, model, manufacturer, firmware_version, battery_state, is_zone_leader, is_circuit_driver) VALUES ('SN004', 4, 1, 100, 'radiator_thermostat', 'Living Room Radiator', 'RV01', 'Tado', '1.20', 'LOW', 0, 0)")
+    cursor.execute("INSERT INTO devices (serial_number, aid, zone_id, tado_zone_id, device_type, name, model, manufacturer, firmware_version, battery_state, is_zone_leader, is_circuit_driver) VALUES ('SN005', 5, 4, 100, 'smart_ac_control', 'Smart AC Control WR12345678', 'AC02', 'Tado', '118.8', NULL, 1, 0)")
+    cursor.execute("INSERT INTO devices (serial_number, aid, zone_id, tado_zone_id, device_type, name, model, manufacturer, firmware_version, battery_state, is_zone_leader, is_circuit_driver) VALUES ('SN006', 1, 1, 103, 'thermostat', 'Attick Thermostat', 'RU01', 'Tado', '1.45', 'NORMAL', 1, 1)")
+
+    cursor.execute("INSERT INTO device_state_history (device_id, timestamp_bucket, current_temperature, target_temperature, current_heating_cooling_state, target_heating_cooling_state, humidity, battery_level, window) VALUES (1, '20260129100000', 21.5, 20.0, 1, 1, 45, 100, 1)")
+    cursor.execute("INSERT INTO device_state_history (device_id, timestamp_bucket, current_temperature, target_temperature, current_heating_cooling_state, target_heating_cooling_state, humidity, battery_level, window) VALUES (2, '20260129100500', 19.0, 18.0, 1, 1, 50, 95, 0)")
+    cursor.execute("INSERT INTO device_state_history (device_id, timestamp_bucket, current_temperature, target_temperature, current_heating_cooling_state, target_heating_cooling_state, humidity, battery_level, window) VALUES (3, '20260129100700', 22.0, 21.0, 0, 0, 40, 100, 0)")
+    cursor.execute("INSERT INTO device_state_history (device_id, timestamp_bucket, current_temperature, target_temperature, current_heating_cooling_state, target_heating_cooling_state, humidity, battery_level, window) VALUES (2, '20260129100700', 19.5, 18.5, 0, 1, 60, 95, 0)")
+    cursor.execute("INSERT INTO device_state_history (device_id, timestamp_bucket, current_temperature, target_temperature, current_heating_cooling_state, target_heating_cooling_state, humidity, battery_level, window) VALUES (4, '20260129101000', 20.5, 20.0, 1, 0, 45, 60, 1)")
+    cursor.execute("INSERT INTO device_state_history (device_id, timestamp_bucket, current_temperature, target_temperature, current_heating_cooling_state, target_heating_cooling_state, humidity, battery_level, window) VALUES (2, '20260129110500', 22.0, 21.0, 1, 1, 55, 75, 0)")
+    cursor.execute("INSERT INTO device_state_history (device_id, timestamp_bucket, current_temperature, target_temperature, current_heating_cooling_state, target_heating_cooling_state, humidity, battery_level, window) VALUES (5, '20260129110500', 22.0, 21.0, 2, 2, 54, 70, 0)")
+
+    conn.commit()
+
+    yield db_path
+
+    conn.close()
+    Path(db_path).unlink()
+
+
+@pytest.fixture
+def app_with_state(test_db):
+    """Create FastAPI app with actual state manager (no mocks)."""
+    from tado_local.routes import create_app, register_routes
+    from tado_local.state import DeviceStateManager
+
+    # Create real state manager with test database
+    state_manager = DeviceStateManager(test_db)
+
+    # Create mock API with real state manager
+    mock_api = AsyncMock()
+    mock_api.state_manager = state_manager
+    mock_api.pairing = AsyncMock()
+    mock_api.set_device_characteristics = AsyncMock(return_value=True)
+    mock_api.accessories_cache = []
+
+    mock_api.event_listeners = []
+    mock_api.change_tracker = {'events_received': 0, 'polling_changes': 0}
+    mock_api.cloud_api = None
+
+    # Deterministic accessory fetch timestamp
+    fetched_at = "2026-01-29T10:00:00Z"
+    mock_api.last_update = 1700000000.0
+
+    # Inject accessories_cache data
+    mock_api.accessories_cache = [
+        {
+            "id": 1,
+            "aid": 1,
+            "serial_number": "SN001",
+            "name": "Living Room Thermostat",
+            "fetched_at": fetched_at,
+            "services": [
+                {
+                    "iid": 2,
+                    "type": "0000004A-0000-1000-8000-0026BB765291",
+                    "value": "tado Smart Radiator Thermostat VA0123456789"
+                 }
+             ]
+        },
+        {
+            "id": 2,
+            "aid": 2,
+            "serial_number": "SN002",
+            "name": "Bedroom Thermostat",
+            "fetched_at": fetched_at,
+            "services": [
+                {
+                    "iid": 2,
+                    "type": "00000023-0000-1000-8000-0026BB765291",
+                    "value": "tado Internet Bridge IB0123456789"
+                 }
+             ]
+        },
+        {
+            "id": 3,
+            "aid": 3,
+            "serial_number": "SN003",
+            "name": "Kitchen Bridge",
+            "fetched_at": fetched_at,
+            "services": [
+                {
+                    "iid": 2,
+                    "type": "0000004A-0000-1000-8000-0026BB765291",
+                    "value": "tado Smart Radiator Thermostat VB0987654321"
+                 }
+             ]
+        }
+    ]
+    mock_api.refresh_accessories.return_value = mock_api.accessories_cache
+
+    app = create_app()
+    register_routes(app, lambda: mock_api)
+
+    return app, state_manager, mock_api
+
+
+@pytest.fixture
+def client(app_with_state):
+    """Create test client."""
+    app, _, _ = app_with_state
+    return TestClient(app)
+
+
+@pytest.fixture
+def state_manager(app_with_state):
+    """Extract state manager from app fixture."""
+    _, state_manager, _ = app_with_state
+    return state_manager
+
+
+@pytest.fixture
+def mock_api(app_with_state):
+    """Extract mock API from app fixture."""
+    _, _, mock_api = app_with_state
+    return mock_api
+
+
+class TestGetStatus:
+    """Test suite for GET /status endpoint."""
+
+    def test_get_status_returns_correct_structure(self, client, state_manager):
+        """Test that GET /status returns correct structure."""
+        response = client.get("/status")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "status" in data
+        assert "last_update" in data
+        assert "bridge_connected" in data
+        assert "cached_accessories" in data
+        assert "active_listeners" in data
+        assert "polling_changes" in data
+        assert "cloud_api" in data
+
+
+    def test_get_status_return_correct_values(self, client, state_manager, mock_api):
+        """Test that GET /status returns correct values."""
+        from tado_local.__version__ import __version__
+
+        response = client.get("/status")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["version"] == __version__
+        assert data["bridge_connected"] is True
+        assert data["status"] == "connected"
+        assert data["cached_accessories"] == 3
+        assert data["active_listeners"] == 0
+        assert data["polling_changes"] == 0
+        assert data["cloud_api"]['authenticated'] is False
+        assert data["cloud_api"]['enabled'] is False
+
+    def test_get_status_with_cloud_api_available(self, client, mock_api, monkeypatch):
+        """Test that GET /status includes cloud API details when available."""
+        import tado_local.routes as routes
+
+        class FakeRateLimit:
+            granted_calls = True
+
+            def to_dict(self):
+                return {"limit": 100, "remaining": 90}
+
+        class FakeCloudApi:
+            def __init__(self):
+                self.home_id = 123
+                self.token_expires_at = 1700003600.0
+                self.rate_limit = FakeRateLimit()
+                self.is_authenticating = False
+                self.auth_verification_uri = None
+                self.auth_user_code = None
+                self.auth_expires_at = None
+
+            def is_authenticated(self):
+                return True
+
+        monkeypatch.setattr(routes.time, "time", lambda: 1700000000.0)
+        mock_api.cloud_api = FakeCloudApi()
+
+        response = client.get("/status")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["cloud_api"]["enabled"] is True
+        assert data["cloud_api"]["authenticated"] is True
+        assert data["cloud_api"]["home_id"] == 123
+        assert data["cloud_api"]["token_expires_at"] == 1700003600.0
+        assert data["cloud_api"]["token_expires_in"] == 3600
+        assert data["cloud_api"]["rate_limit"] == {"limit": 100, "remaining": 90}
+
+    def test_get_status_with_cloud_api_authenticating(self, client, mock_api, monkeypatch):
+        """Test that GET /status reports authentication details when in progress."""
+        import tado_local.routes as routes
+
+        class FakeCloudApi:
+            def __init__(self):
+                self.home_id = None
+                self.token_expires_at = None
+                self.rate_limit = None
+                self.is_authenticating = True
+                self.auth_verification_uri = "https://example.com/verify"
+                self.auth_user_code = "ABCD-1234"
+                self.auth_expires_at = 1700000300.0
+
+            def is_authenticated(self):
+                return False
+
+        monkeypatch.setattr(routes.time, "time", lambda: 1700000000.0)
+        mock_api.cloud_api = FakeCloudApi()
+
+        response = client.get("/status")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["cloud_api"]["enabled"] is True
+        assert data["cloud_api"]["authenticated"] is False
+        assert data["cloud_api"]["authentication_required"] is True
+        assert data["cloud_api"]["verification_uri"] == "https://example.com/verify"
+        assert data["cloud_api"]["user_code"] == "ABCD-1234"
+        assert data["cloud_api"]["auth_expires_at"] == 1700000300.0
+        assert data["cloud_api"]["auth_expires_in"] == 300
+
+    def test_get_status_with_cloud_api_not_authenticated(self, client, mock_api):
+        """Test that GET /status marks auth required when not authenticated."""
+        class FakeCloudApi:
+            def __init__(self):
+                self.home_id = None
+                self.token_expires_at = None
+                self.rate_limit = None
+                self.is_authenticating = False
+                self.auth_verification_uri = None
+                self.auth_user_code = None
+                self.auth_expires_at = None
+
+            def is_authenticated(self):
+                return False
+
+        mock_api.cloud_api = FakeCloudApi()
+
+        response = client.get("/status")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["cloud_api"]["enabled"] is True
+        assert data["cloud_api"]["authenticated"] is False
+        assert data["cloud_api"]["authentication_required"] is True
+        assert data["cloud_api"]["message"] == "Authentication will start automatically"
+
+    def test_get_status_with_cloud_api_disabled(self, client, mock_api):
+        """Test that GET /status reports cloud API as disabled when not set."""
+        mock_api.cloud_api = None
+
+        response = client.get("/status")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["cloud_api"]["enabled"] is False
+        assert data["cloud_api"]["authenticated"] is False
+        assert "home_id" not in data["cloud_api"]
+        assert "token_expires_at" not in data["cloud_api"]
+        assert "authentication_required" not in data["cloud_api"]
+
+    def test_get_status_bridge_not_connected(self, client, mock_api):
+        """Test that GET /status reports bridge not connected when API is unavailable."""
+        mock_api.pairing = None
+
+        response = client.get("/status")
+
+        assert response.status_code == 503
+        data = response.json()
+        assert data["detail"] == "Bridge not connected"
+
+    def test_get_status_connection_exeptions(self, client, mock_api):
+        """Test that GET /status handles exceptions gracefully."""
+
+        mock_api.pairing.list_accessories_and_characteristics.side_effect = Exception("Connection error")
+
+        response = client.get("/status")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["status"] == "error"
+        assert data["bridge_connected"] is False
+        assert data["error"] == "Connection error"
+
+class TestGetAccessories:
+    """Test suite for GET /accessories endpoint."""
+
+    def test_get_accessories_returns_all_accessories(self, client, mock_api):
+        """Test that GET /accessories returns the cached accessories."""
+        response = client.get("/accessories")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "accessories" in data
+        assert isinstance(data["accessories"], list)
+        assert len(data["accessories"]) == 3
+
+    def test_get_accessories_structure(self, client, mock_api):
+        """Test that each accessory contains expected fields."""
+        response = client.get("/accessories")
+        data = response.json()
+        acc = data["accessories"][0]
+
+        assert "aid" in acc
+        assert "id" in acc or "aid" in acc  # allow either id or aid presence
+        assert "services" in acc
+        assert isinstance(acc["services"], list)
+
+    def test_get_accessories_values(self, client, mock_api):
+        """Test that accessory values match the mock_api data."""
+        response = client.get("/accessories")
+        data = response.json()
+        acc = data["accessories"][0]
+
+        assert acc["aid"] == 1
+        assert acc["id"] == 1
+        assert acc["serial_number"] == "SN001"
+
+        assert isinstance(acc["services"], list)
+        assert acc["services"][0]["type"] == "0000004A-0000-1000-8000-0026BB765291"
+        assert acc["services"][0]["type_name"] == "Thermostat"
+
+    def test_get_accessory_by_aid(self, client, mock_api):
+        """Test GET /accessories/{aid} returns specific accessory."""
+        response = client.get("/accessories/1")
+        assert response.status_code == 200
+        data = response.json()
+        # endpoint may return the accessory directly or under a key
+        acc = data.get("accessory") if isinstance(data, dict) and "accessory" in data else data
+        # ensure this is the accessory with aid 1
+        assert acc["aid"] == 1 or acc.get("id") == 1
+
+    def test_get_accessory_by_aid_with_enhanced_is_false(self, client, mock_api):
+        """Test GET /accessories/{aid}?enhanced=false returns accessory without enhancements."""
+        response = client.get("/accessories/1?enhanced=false")
+        assert response.status_code == 200
+        data = response.json()
+        assert "enhanced" in data
+        assert data["enhanced"] is False
+        assert "note" not in data
+
+        acc = data.get("accessory") if isinstance(data, dict) and "accessory" in data else data
+
+        # Check that no extra fields are present (like 'type_name')
+        for service in acc.get("services", []):
+            assert "type_name" not in service
+
+    def test_get_accessory_with_enhanced_is_false(self, client, mock_api):
+        """Test GET /accessories?enhanced=false returns accessory without enhancements."""
+        response = client.get("/accessories?enhanced=false")
+        assert response.status_code == 200
+        data = response.json()
+        assert "enhanced" in data
+        assert data["enhanced"] is False
+        assert "note" not in data
+
+        acc = data.get("accessory") if isinstance(data, dict) and "accessory" in data else data
+
+        # Check that no extra fields are present (like 'type_name')
+        for service in acc.get("services", []):
+            assert "type_name" not in service
+
+    def test_get_accessory_with_enhanced_is_true(self, client, mock_api):
+        """Test GET /accessories/{aid}?enhanced=true returns accessory without enhancements."""
+        response = client.get("/accessories?enhanced=true")
+        assert response.status_code == 200
+        data = response.json()
+        assert "enhanced" in data
+        assert data["enhanced"] is True
+        assert "note" in data
+
+        # Now fetch without enhanced to compare should be the same (enhaced is default)
+        response = client.get("/accessories")
+        assert response.status_code == 200
+        data_wo = response.json()
+        assert data == data_wo
+
+    def test_get_accessory_nonexistent(self, client, mock_api):
+        """Test GET /accessories/{aid} for nonexistent accessory returns 404."""
+        response = client.get("/accessories/999")
+        assert response.status_code == 404
+
+class TestGetZones:
+    """Test suite for GET /zones endpoint."""
+
+    def test_get_zones_returns_all_zones(self, client, state_manager):
+        """Test that GET /zones returns all zones from database."""
+        response = client.get("/zones")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "zones" in data
+        assert len(data["zones"]) == 5
+
+    def test_get_zones_includes_zone_metadata(self, client, state_manager):
+        """Test that zone data includes required metadata."""
+        response = client.get("/zones")
+
+        data = response.json()
+        zones = data["zones"]
+
+        zone = zones[0]
+        assert "zone_id" in zone
+        assert "tado_zone_id" in zone
+        assert "name" in zone
+        assert "leader_device_id" in zone
+        assert "order_id" in zone
+        assert "state" in zone
+        assert "device_count" in zone
+
+
+    def test_get_zones_ordered_by_order_id(self, client, state_manager):
+        """Test that zones are returned ordered by order_id."""
+        response = client.get("/zones")
+
+        data = response.json()
+        zones = data["zones"]
+
+        assert zones[0]["name"] == "Living Room"
+        assert zones[0]["order_id"] == 1
+        assert zones[1]["name"] == "Bedroom"
+        assert zones[1]["order_id"] == 2
+        assert zones[2]["name"] == "Kitchen"
+        assert zones[2]["order_id"] == 3
+        assert zones[3]["name"] == "Office"
+        assert zones[3]["order_id"] == 4
+        assert zones[4]["name"] == "Attick"
+        assert zones[4]["order_id"] == 5
+        assert zones[2]["home_id"] is None
+        assert zones[2]['window_open_time'] == 20
+        assert zones[2]['window_rest_time'] == 30
+
+        assert "state" in zones[2]
+        assert zones[2]['state']['cur_temp_c'] == 22.0
+        assert zones[2]['state']['cur_temp_f'] == 71.6
+        assert zones[2]['state']['hum_perc'] == 40.0
+        assert zones[2]['state']['target_temp_c'] == 21.0
+        assert zones[2]['state']['target_temp_f'] == 69.8
+        assert zones[2]['state']['mode'] == 0
+        assert zones[2]['state']['cur_heating'] == 0
+        assert zones[2]['state']['window_open'] is False
+
+        assert zones[2]["device_count"] == 1
+
+    def test_get_zones_correct_names(self, client, state_manager):
+        """Test that zone names are correct from database."""
+        response = client.get("/zones")
+
+        data = response.json()
+        zones = data["zones"]
+
+        zone_names = [z["name"] for z in zones]
+        assert "Living Room" in zone_names
+        assert "Bedroom" in zone_names
+        assert "Kitchen" in zone_names
+        assert "Office" in zone_names
+
+    def test_get_zones_leader_device_ids(self, client, state_manager):
+        """Test that zone leader device IDs are correct from database."""
+        response = client.get("/zones")
+
+        data = response.json()
+        zones = data["zones"]
+
+        zone_leaders = {z["name"]: z["leader_device_id"] for z in zones}
+        assert zone_leaders["Living Room"] == 1
+        assert zone_leaders["Bedroom"] == 2
+        assert zone_leaders["Kitchen"] is None  # No leader
+
+    def test_get_zones_tado_zone_ids(self, client, state_manager):
+        """Test that tado_zone_ids are correct from database."""
+        response = client.get("/zones")
+
+        data = response.json()
+        zones = data["zones"]
+
+        zone_tado_ids = {z["name"]: z["tado_zone_id"] for z in zones}
+        assert zone_tado_ids["Living Room"] == 100
+        assert zone_tado_ids["Bedroom"] == 101
+        assert zone_tado_ids["Kitchen"] == 102
+        assert zone_tado_ids["Office"] == 103
+
+    def test_get_zones_response_is_json(self, client, state_manager):
+        """Test that response is valid JSON."""
+        response = client.get("/zones")
+
+        assert response.status_code == 200
+        assert "application/json" in response.headers["content-type"]
+        data = response.json()
+        assert isinstance(data, dict)
+
+    def test_get_zones_with_missing_state(self, client, state_manager, monkeypatch):
+        """Test that zones with missing state data still return correctly."""
+        monkeypatch.setattr(state_manager, "get_state_with_optimistic", lambda *_args, **_kwargs: None)
+        monkeypatch.setattr(state_manager, "get_current_state", lambda *_args, **_kwargs: None)
+        # Use existing zones but force state lookups to return None
+        response = client.get("/zones")
+
+        assert response.status_code == 200
+        data = response.json()
+        zones = data["zones"]
+
+        kitchen_zone = next((z for z in zones if z["name"] == "Kitchen"), None)
+        assert kitchen_zone is not None
+        assert "state" in kitchen_zone
+        assert kitchen_zone["state"]["cur_temp_c"] is None
+        assert kitchen_zone["state"]["cur_temp_f"] is None
+        assert kitchen_zone["state"]["hum_perc"] is None
+        assert kitchen_zone["state"]["target_temp_c"] is None
+        assert kitchen_zone["state"]["target_temp_f"] is None
+        assert kitchen_zone["state"]["mode"] == 0
+        assert kitchen_zone["state"]["cur_heating"] == 0
+        assert kitchen_zone["state"]["window_open"] is None
+
+    def test_get_zones_with_cloud_api_found(self, client, state_manager, mock_api):
+        """Test that zones include cloud API data when available."""
+        class FakeCloudApi:
+            def is_authenticated(self):
+                return True
+            async def get_home_info(self):
+                return {"id": 123, "name": "Home", "cloud_data": "example"}
+
+        mock_api.cloud_api = FakeCloudApi()
+
+        response = client.get("/zones")
+        assert response.status_code == 200
+        data = response.json()
+        homes = data["homes"]
+
+        home = next((h for h in homes if h["name"] == "Home"), None)
+        assert home is not None
+        assert "id" in home
+        assert home["id"] == 123
+        assert "name" in home
+        assert home["name"] == "Home"
+
+    def test_get_zone_by_id(self, client, state_manager):
+        """Test GET /zones/{zone_id} endpoint."""
+        response = client.get("/zones/1")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "zone" in data
+        assert data["zone"]["zone_id"] == 1
+        assert data["zone"]["name"] == "Living Room"
+        assert data["zone"]['window_open_time'] == 33
+        assert data["zone"]['window_rest_time'] == 66
+
+        assert "state"in data["zone"]
+        assert data["zone"]['state']['cur_temp_c'] == 21.5
+        assert data["zone"]['state']['cur_temp_f'] == 70.7
+        assert data["zone"]['state']['hum_perc'] == 45.0
+        assert data["zone"]['state']['target_temp_c'] == 20.0
+        assert data["zone"]['state']['target_temp_f'] == 68.0
+        assert data["zone"]['state']['mode'] == 1
+        assert data["zone"]['state']['cur_heating'] == 1
+        assert data["zone"]['state']['window_open'] is True
+
+    def test_get_zone_nonexistent(self, client, state_manager):
+        """Test GET /zones/{zone_id} with nonexistent zone."""
+        response = client.get("/zones/999")
+
+        assert response.status_code == 404
+
+    def test_get_zones_all_have_zone_ids(self, client, state_manager):
+        """Test that all zones have zone_ids."""
+        response = client.get("/zones")
+
+        data = response.json()
+        zones = data["zones"]
+
+        for zone in zones:
+            assert zone["zone_id"] is not None
+            assert isinstance(zone["zone_id"], int)
+
+    def test_get_zone_with_missing_state(self, client, state_manager, monkeypatch):
+        """Test that zones with missing state data still return correctly."""
+        monkeypatch.setattr(state_manager, "get_state_with_optimistic", lambda *_args, **_kwargs: None)
+        monkeypatch.setattr(state_manager, "get_current_state", lambda *_args, **_kwargs: None)
+        # Use existing zones but force state lookups to return None
+        response = client.get("/zones/1")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        kitchen_zone = data["zone"]
+        assert kitchen_zone is not None
+        assert "state" in kitchen_zone
+        assert kitchen_zone["state"]["cur_temp_c"] is None
+        assert kitchen_zone["state"]["cur_temp_f"] is None
+        assert kitchen_zone["state"]["hum_perc"] is None
+        assert kitchen_zone["state"]["target_temp_c"] is None
+        assert kitchen_zone["state"]["target_temp_f"] is None
+        assert kitchen_zone["state"]["mode"] == 0
+        assert kitchen_zone["state"]["cur_heating"] == 0
+        assert kitchen_zone["state"]["window_open"] is None
+
+    def test_get_zone_with_cloud_api_found(self, client, state_manager, mock_api):
+        """Test that zones include cloud API data when available."""
+        class FakeCloudApi:
+            def is_authenticated(self):
+                return True
+            async def get_home_info(self):
+                return {"id": 123, "name": "Home", "cloud_data": "example"}
+
+        mock_api.cloud_api = FakeCloudApi()
+
+        response = client.get("/zones/1")
+        assert response.status_code == 200
+        data = response.json()
+
+        home = data["home"]
+
+        assert home is not None
+        assert "id" in home
+        assert home["id"] == 123
+        assert "name" in home
+        assert home["name"] == "Home"
+
+    def test_get_zone_history(self, client, state_manager):
+        """Test GET /zones/{zone_id}/history endpoint."""
+        response = client.get("/zones/2/history")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "history" in data
+        assert isinstance(data["history"], list)
+        assert len(data["history"]) > 0
+
+        entry = data["history"][0]
+        assert "state" in entry
+        state = entry["state"]
+
+        assert "cur_heating" in state
+        assert "cur_temp_c" in state
+        assert "target_temp_c" in state
+        assert "cur_heating" in state
+        assert "hum_perc" in state
+        assert "battery_low" in state
+
+        assert state["cur_heating"] == 1
+        assert state["cur_temp_c"] == 22.0
+        assert state["target_temp_c"] == 21.0
+        assert state["cur_heating"] == 1
+        assert state["hum_perc"] == 55.0
+        assert state["battery_low"] is False
+
+    def test_get_zone_history_nonexistent_zone(self, client, state_manager):
+        """Test GET /zones/{zone_id}/history with nonexistent zone."""
+        response = client.get("/zones/999/history")
+
+        assert response.status_code == 404
+
+    def test_get_zone_history_limited_entries(self, client, state_manager):
+        """Test GET /zones/{zone_id}/history with limit parameter."""
+        response = client.get("/zones/2/history?limit=1")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "history" in data
+        assert isinstance(data["history"], list)
+        assert len(data["history"]) == 1
+
+    def test_get_zone_history_invalid_limit(self, client, state_manager):
+        """Test GET /zones/{zone_id}/history with invalid limit parameter."""
+        response = client.get("/zones/2/history?limit=abc")
+
+        assert response.status_code == 422  # Unprocessable Entity due to invalid parameter type
+        data = response.json()
+        assert "detail" in data
+        assert "input should...as an integer" in data["detail"][0]["msg"].lower() \
+                or "input should be a valid integer" in data["detail"][0]["msg"].lower()
+
+    def test_get_zone_history_limit_offset(self, client, state_manager):
+        """Test GET /zones/{zone_id}/history with limit and offset parameters."""
+        response = client.get("/zones/2/history?limit=1&offset=1")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "history" in data
+        assert isinstance(data["history"], list)
+        assert len(data["history"]) == 1
+
+        entry = data["history"][0]
+        assert "state" in entry
+        state = entry["state"]
+
+        assert state["cur_heating"] == 0
+        assert state["cur_temp_c"] == 19.5
+        assert state["target_temp_c"] == 18.5
+        assert state["cur_heating"] == 0
+        assert state["hum_perc"] == 60.0
+        assert state["battery_low"] is False
+
+    def test_post_create_zone(self, client, state_manager):
+        """Test POST /zones to create a new zone."""
+
+        response = client.post("/zones?leader_device_id=10&name=Bathroom")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "zone_id" in data
+        assert data["zone_id"] == 6
+        assert "name" in data
+        assert data["name"] == "Bathroom"
+
+        # Verify it was actually created in the database
+        conn = sqlite3.connect(state_manager.db_path)
+        cursor = conn.execute(
+            "SELECT name, leader_device_id FROM zones WHERE zone_id = ?",
+            (data["zone_id"],)
+        )
+        row = cursor.fetchone()
+        conn.close()
+
+        assert row is not None
+        assert row[0] == "Bathroom"
+        assert row[1] == 10
+
+    def test_post_create_zone_missing_name(self, client, state_manager):
+        """Test POST /zones with missing name parameter."""
+        response = client.post("/zones?leader_device_id=10")
+
+        assert response.status_code == 422  # Unprocessable Entity due to missing required parameter
+        data = response.json()
+        assert "detail" in data
+        assert data["detail"][0]["msg"].lower() == "field required"
+
+    def test_post_create_zone_invalid_leader_device_id(self, client, state_manager):
+        """Test POST /zones with invalid leader_device_id parameter."""
+        response = client.post("/zones?leader_device_id=abc&name=Bathroom")
+
+        assert response.status_code == 422  # Unprocessable Entity due to invalid parameter type
+        data = response.json()
+
+        assert "detail" in data
+        assert data["detail"][0]["msg"].lower() == "input should...as an integer" \
+            or "input should be a valid integer" in data["detail"][0]["msg"].lower()
+
+    def test_post_create_zone_no_leader_device_id(self, client, state_manager):
+        """Test POST /zones without leader_device_id parameter."""
+        response = client.post("/zones?name=Bathroom")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "zone_id" in data
+        assert data["zone_id"] == 6
+        assert "name" in data
+        assert data["name"] == "Bathroom"
+
+    def test_put_zone_id_update_name(self, client, state_manager):
+        """Test PUT /zones/{zone_id} to update zone name with mismatched zone_id in path and body."""
+        response = client.put("/zones/1?name=New Name&leader_device_id=999&order_id=22")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "zone_id" in data
+        assert data["zone_id"] == 1
+        assert "updated" in data
+        assert data["updated"] is True
+
+        # check database to ensure zone_id was not  to 999
+        conn = sqlite3.connect(state_manager.db_path)
+        cursor = conn.execute(
+            "SELECT zone_id, name, leader_device_id, order_id  FROM zones WHERE zone_id = ?",
+            (1,)
+        )
+        row = cursor.fetchone()
+        conn.close()
+
+        assert row is not None
+        assert row[0] == 1          # zone_id should remain 1, not updated to 999
+        assert row[1] == "New Name" # name should be updated to "New Name"
+        assert row[2] == 999        # leader_device_id should be updated to 999
+        assert row[3] == 22         # order_id should be updated to 22
+
+    def test_put_zone_update_name_no_parameters(self, client, state_manager):
+        """Test PUT /zones/{zone_id} to update zone name with no parameters."""
+        response = client.put("/zones/1")
+
+        assert response.status_code == 400
+        data = response.json()
+        assert "detail" in data
+        assert data["detail"] == "No updates provided"
+
+    def test_put_zone_update_name_wrong_zone_id(self, client, state_manager):
+        """Test PUT /zones/{zone_id} to update zone name with non-existent zone_id."""
+        response = client.put("/zones/999?name=New Living Room")
+
+        assert response.status_code == 404
+        data = response.json()
+        assert "detail" in data
+        assert data["detail"] == "Zone 999 not found or no changes made"
+
+        # Verify it was not updated in the database
+        conn = sqlite3.connect(state_manager.db_path)
+        cursor = conn.execute(
+            "SELECT * FROM zones WHERE zone_id = ?",
+            (999,)
+        )
+        row = cursor.fetchone()
+        conn.close()
+        assert row is  None
+
+
+
+class TestGetThermostats:
+    """Test suite for GET /thermostats endpoint."""
+
+    def test_get_thermostats_returns_all_thermostats(self, client, state_manager):
+        """Test that GET /thermostats returns all thermostat devices from database."""
+        response = client.get("/thermostats")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "thermostats" in data
+        assert len(data["thermostats"]) == 2
+
+    def test_get_thermostats_excludes_non_thermostat_devices(self, client, state_manager):
+        """Test that GET /thermostats excludes bridge and radiator devices."""
+        response = client.get("/thermostats")
+
+        data = response.json()
+        thermostats = data["thermostats"]
+
+        device_types = [t["device_type"] for t in thermostats]
+        assert all(dt == "thermostat" for dt in device_types)
+        assert "bridge" not in device_types
+        assert "radiator_thermostat" not in device_types
+
+    def test_get_thermostats_correct_names(self, client, state_manager):
+        """Test that thermostat names are correct from database."""
+        response = client.get("/thermostats")
+
+        data = response.json()
+        thermostats = data["thermostats"]
+
+        names = [t["zone_name"] for t in thermostats]
+        assert "Kitchen" in names
+        assert "Living Room" in names
+
+    def test_get_thermostats_includes_temperature_data(self, client, state_manager):
+        """Test that thermostat data includes temperature information from state."""
+        response = client.get("/thermostats")
+
+        data = response.json()
+        thermostats = data["thermostats"]
+
+        thermostat = thermostats[0]
+        assert "state" in thermostat
+
+        assert thermostat['state'] is not None
+        assert "cur_temp_c" in thermostat['state']
+        assert "cur_temp_f" in thermostat['state']
+        assert "target_temp_c" in thermostat['state']
+        assert "target_temp_f" in thermostat['state']
+        assert "hum_perc" in thermostat['state']
+        assert "mode" in thermostat['state']
+        assert "cur_heating" in thermostat['state']
+        assert "valve_position" in thermostat['state']
+        assert "battery_low" in thermostat['state']
+
+    def test_get_thermostats_temperature_values(self, client, state_manager):
+        """Test that thermostat temperature values are correct from state history."""
+        response = client.get("/thermostats")
+
+        data = response.json()
+        thermostats = data["thermostats"]
+
+        # Living room thermostat
+        living_room = next((t for t in thermostats if t["zone_name"] == "Living Room"), None)
+        assert living_room is not None
+        assert living_room['aid'] == 1
+        assert living_room['serial_number'] == 'SN001'
+        assert living_room['zone_name'] == "Living Room"
+        assert living_room['zone_id'] == 1
+        assert living_room['is_zone_leader'] is True
+
+        assert living_room['state']['cur_temp_c'] == 21.5
+        assert living_room['state']['cur_temp_f'] == 70.7
+        assert living_room['state']['hum_perc'] == 45.0
+        assert living_room['state']['target_temp_c'] == 20.0
+        assert living_room['state']['target_temp_f'] == 68.0
+        assert living_room['state']['mode'] == 1
+        assert living_room['state']['cur_heating'] == 1
+        assert living_room['state']['valve_position'] is None
+        assert living_room['state']['battery_low'] is False
+
+        # kitchen thermostat
+        kitchen = next((t for t in thermostats if t["zone_name"] == "Kitchen"), None)
+        assert kitchen is not None
+        assert kitchen['device_id'] == 3
+        assert kitchen['aid'] == 3
+        assert kitchen['serial_number'] == 'SN003'
+        assert kitchen['zone_name'] == "Kitchen"
+        assert kitchen['zone_id'] == 3
+        assert kitchen['is_zone_leader'] is False
+
+        assert kitchen['state']['cur_temp_c'] == 22.0
+        assert kitchen['state']['cur_temp_f'] == 71.6
+        assert kitchen['state']['hum_perc'] == 40.0
+        assert kitchen['state']['target_temp_c'] == 21.0
+        assert kitchen['state']['target_temp_f'] == 69.8
+        assert kitchen['state']['mode'] == 0
+        assert kitchen['state']['cur_heating'] == 0
+        assert kitchen['state']['valve_position'] is None
+        assert kitchen['state']['battery_low'] is True
+
+
+    def test_get_thermostats_includes_device_metadata(self, client, state_manager):
+        """Test that thermostat data includes device metadata from database."""
+        response = client.get("/thermostats")
+
+        data = response.json()
+        thermostats = data["thermostats"]
+
+        thermostat = thermostats[0]
+        assert "device_id" in thermostat
+        assert "aid" in thermostat
+        assert "serial_number" in thermostat
+        assert "zone_name" in thermostat
+        assert "zone_id" in thermostat
+        assert "device_type" in thermostat
+        assert "is_zone_leader" in thermostat
+
+    def test_get_thermostat_by_id(self, client, state_manager):
+        """Test GET /thermostats/{thermostat_id} endpoint."""
+        response = client.get("/thermostats/3")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["device_id"] == 3
+        assert data["zone_name"] == "Kitchen"
+        assert data["device_type"] == "thermostat"
+        assert data['state']['cur_temp_c'] == 22.0
+        assert data['state']['hum_perc'] == 40.0
+
+    def test_get_thermostat_nonexistent(self, client, state_manager):
+        """Test GET /thermostats/{thermostat_id} with nonexistent thermostat."""
+        response = client.get("/thermostats/999")
+
+        assert response.status_code == 404
+
+    def test_get_thermostat_non_thermostat_device(self, client, state_manager):
+        """Test GET /thermostats/{id} with non-thermostat device."""
+        # Device 2 is a bridge, not a thermostat
+        response = client.get("/thermostats/2")
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"] == "Device 2 is not a thermostat"
+
+    def test_get_thermostats_response_is_json(self, client, state_manager):
+        """Test that response is valid JSON."""
+        response = client.get("/thermostats")
+
+        assert response.status_code == 200
+        assert "application/json" in response.headers["content-type"]
+        data = response.json()
+        assert isinstance(data, dict)
+
+    def test_get_thermostats_all_have_device_ids(self, client, state_manager):
+        """Test that all thermostats have device_ids."""
+        response = client.get("/thermostats")
+
+        data = response.json()
+        thermostats = data["thermostats"]
+
+        for thermostat in thermostats:
+            assert thermostat["device_id"] is not None
+            assert isinstance(thermostat["device_id"], int)
+
+    def test_get_thermostats_history(self, client, state_manager):
+        """Test GET /thermostats/{thermostat_id}/history endpoint."""
+        response = client.get("/thermostats/2/history")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "count" in data
+        assert data["count"] == 3
+
+        assert "device_id" in data
+        assert data["device_id"] == 2
+
+        assert "history" in data
+        assert len(data["history"]) >= 1
+
+        assert "state" in data["history"][0]
+        assert "timestamp" in data["history"][0]
+
+        state = data["history"][0]["state"]
+        assert "cur_temp_c" in state
+        assert "cur_temp_f" in state
+        assert "target_temp_c" in state
+        assert "target_temp_f" in state
+        assert "mode" in state
+        assert "cur_heating" in state
+        assert "hum_perc" in state
+        assert "battery_low" in state
+        assert "valve_position" in state
+
+
+class TestGetDevices:
+    """Test suite for GET /devices endpoint."""
+
+    def test_get_devices_returns_all_devices(self, client, state_manager):
+        """Test that GET /devices returns all devices from database."""
+        response = client.get("/devices")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "devices" in data
+        assert len(data["devices"]) == 6
+        assert data["count"] == 6
+
+    def test_get_devices_includes_device_metadata(self, client, state_manager):
+        """Test that device data includes required metadata."""
+        response = client.get("/devices")
+
+        data = response.json()
+        devices = data["devices"]
+
+        device = devices[0]
+        assert "device_id" in device
+        assert "aid" in device
+        assert "serial_number" in device
+        assert "zone_id" in device
+        assert "device_type" in device
+        assert "zone_name" in device
+        assert "model" in device
+        assert "firmware_version" in device
+        assert "is_zone_leader" in device
+        assert "is_circuit_driver" in device
+
+    def test_get_devices_response_is_json(self, client, state_manager):
+        """Test that response is valid JSON."""
+        response = client.get("/devices")
+
+        assert response.status_code == 200
+        assert "application/json" in response.headers["content-type"]
+        data = response.json()
+        assert isinstance(data, dict)
+
+    def test_get_devices_includes_correct_metadata(self, client, state_manager):
+        """Test that device data includes temperature information from state."""
+        response = client.get("/devices")
+
+        data = response.json()
+        devices = data["devices"]
+
+        device = devices[0]
+        assert device["device_id"] == 1
+        assert device["serial_number"] == 'SN001'
+        assert device["zone_id"] == 1
+        assert device["device_type"] == 'thermostat'
+        assert device["zone_name"] == 'Living Room'
+        assert device["model"] == 'RU01'
+        assert device["firmware_version"] == '1.45'
+        assert device["is_zone_leader"] is True
+        assert device["is_circuit_driver"] is True
+
+    def test_get_devices_correct_state_data(self, client, state_manager):
+        """Test that device state data is correct from state history."""
+        response = client.get("/devices")
+
+        data = response.json()
+        devices = data["devices"]
+
+        # Living room thermostat
+        living_room = next((d for d in devices if d["zone_name"] == "Living Room"), None)
+        assert living_room is not None
+
+        assert living_room['state']['cur_temp_c'] == 21.5
+        assert living_room['state']['cur_temp_f'] == 70.7
+        assert living_room['state']['hum_perc'] == 45.0
+        assert living_room['state']['target_temp_c'] == 20.0
+        assert living_room['state']['target_temp_f'] == 68.0
+        assert living_room['state']['mode'] == 1
+        assert living_room['state']['cur_heating'] == 1
+        assert living_room['state']['valve_position'] is None
+        assert living_room['state']['battery_low'] is False
+
+    def test_get_device_by_id(self, client, state_manager):
+        """Test GET /devices/{device_id} endpoint."""
+        response = client.get("/devices/4")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "device_id" in data
+        assert data["device_id"] == 4
+        assert data["zone_name"] == "Living Room"
+        assert data["device_type"] == "radiator_thermostat"
+        assert data['state']['cur_heating'] == 1
+        assert data['state']['cur_temp_c'] == 20.5
+        assert data['state']['battery_low'] is True
+
+    def test_get_device_nonexistent(self, client, state_manager):
+        """Test GET /devices/{device_id} with nonexistent device."""
+        response = client.get("/devices/999")
+
+        assert response.status_code == 404
+
+    def test_get_devices_all_have_device_ids(self, client, state_manager):
+        """Test that all devices have device_ids."""
+        response = client.get("/devices")
+
+        data = response.json()
+        devices = data["devices"]
+
+        for device in devices:
+            assert device["device_id"] is not None
+            assert isinstance(device["device_id"], int)
+
+    def test_get_device_state_data(self, client, state_manager):
+        """Test that device state data is correct from state history."""
+        response = client.get("/devices/1")  # Living Room Thermostat
+
+        assert response.status_code == 200
+        data = response.json()
+        state = data["state"]
+
+        assert state['cur_temp_c'] == 21.5
+        assert state['cur_temp_f'] == 70.7
+        assert state['hum_perc'] == 45.0
+        assert state['target_temp_c'] == 20.0
+        assert state['target_temp_f'] == 68.0
+        assert state['mode'] == 1
+        assert state['cur_heating'] == 1
+
+    def test_get_device_is_zone_leader(self, client, state_manager):
+        """Test that device is_zone_leader flag is correct from database."""
+        response = client.get("/devices/1")  # Living Room Thermostat, is leader
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["is_zone_leader"] is True
+
+        response = client.get("/devices/3")  # Kitchen Thermostat, not leader
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["is_zone_leader"] is False
+
+    def test_get_device_history(self, client, state_manager):
+        """Test GET /devices/{device_id}/history endpoint."""
+        response = client.get("/devices/2/history")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "count" in data
+        assert data["count"] == 3
+
+        assert "device_id" in data
+        assert data["device_id"] == 2
+
+        assert "history" in data
+        assert len(data["history"]) >= 1
+
+        assert "state" in data["history"][0]
+        assert "timestamp" in data["history"][0]
+
+        state = data["history"][0]["state"]
+        assert "cur_temp_c" in state
+        assert "cur_temp_f" in state
+        assert "target_temp_c" in state
+        assert "target_temp_f" in state
+        assert "mode" in state
+        assert "cur_heating" in state
+        assert "hum_perc" in state
+        assert "battery_low" in state
+        assert "valve_position" in state
+
+    def test_get_device_history_valid_state_data(self, client, state_manager):
+        """Test that device history state data is correct from state history."""
+        response = client.get("/devices/2/history")  # Living Room Radiator
+
+        assert response.status_code == 200
+        data = response.json()
+        history = data["history"]
+
+        record = history[0]
+        state = record["state"]
+
+        assert state['cur_temp_c'] == 22.0
+        assert state['cur_temp_f'] == 71.6
+        assert state['hum_perc'] == 55.0
+        assert state['target_temp_c'] == 21.0
+        assert state['target_temp_f'] == 69.8
+        assert state['mode'] == 1
+        assert state['cur_heating'] == 1
+        assert state['valve_position'] is None
+        assert state['battery_low'] is False
+
+
+    def test_get_device_history_nonexistent(self, client, state_manager):
+        """Test GET /devices/{device_id}/history with nonexistent device."""
+        response = client.get("/devices/999/history")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "device_id" in data
+        assert data["device_id"] == 999
+        assert "history" in data
+        assert len(data["history"]) == 0
+
+        assert "count" in data
+        assert "limit" in data
+        assert "offset" in data
+
+        assert data["count"] == 0
+        assert data["limit"] == 100
+        assert data["offset"] == 0
+
+    def test_get_device_history_limit(self, client, state_manager):
+        """Test GET /devices/{device_id}/history with limit and offset."""
+        response = client.get("/devices/2/history?limit=2&offset=0")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "history" in data
+        assert len(data["history"]) == 2
+
+        assert "count" in data
+        assert "limit" in data
+        assert "offset" in data
+
+        assert data["count"] == 2
+        assert data["limit"] == 2
+        assert data["offset"] == 0
+
+    def test_get_device_history_limit_and_offset(self, client, state_manager):
+        """Test GET /devices/{device_id}/history with limit and offset."""
+        response = client.get("/devices/2/history?limit=2&offset=2")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "history" in data
+        assert len(data["history"]) == 1
+
+        assert "count" in data
+        assert "limit" in data
+        assert "offset" in data
+
+        assert data["count"] == 1
+        assert data["limit"] == 2
+        assert data["offset"] == 2
+
+        history = data["history"]
+
+        record = history[0]
+        state = record["state"]
+
+        assert state['cur_temp_c'] == 19.0
+        assert state['hum_perc'] == 50.0
+        assert state['target_temp_c'] == 18.0
+        assert state['mode'] == 1
+        assert state['cur_heating'] == 1
+        assert state['valve_position'] is None
+        assert state['battery_low'] is False
+
+    def test_get_device_history_limit_too_large(self, client, state_manager):
+        """Test GET /devices/{device_id}/history with limit and offset."""
+        response = client.get("/devices/4/history?limit=2&offset=0")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "history" in data
+        assert len(data["history"]) == 1
+
+        assert "count" in data
+        assert "limit" in data
+        assert "offset" in data
+
+        assert data["count"] == 1
+        assert data["limit"] == 2
+        assert data["offset"] == 0
+
+    def test_get_device_history_limit_exceeds_count(self, client, state_manager):
+        """Test GET /devices/{device_id}/history with limit exceeding count."""
+        response = client.get("/devices/1/history?limit=10&offset=0")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "history" in data
+        assert len(data["history"]) == 1  # Only 1 record exists
+
+        assert "count" in data
+        assert data["count"] == 1
+
+    def test_put_device_in_zone(self, client, state_manager):
+        """Test PUT /devices/{device_id} to move device to a different zone."""
+
+        response = client.get("/devices/1")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["zone_id"] == 1  # Initially in zone 1
+
+        response = client.put("/devices/1/zone?zone_id=2")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "zone_id" in data
+        assert data["zone_id"] == 2 # Updated to zone 2
+
+class TestSetZoneBridgeCommands:
+    """Test suite for set_zone route bridge command generation."""
+
+    def test_set_zone_missing_inputs_returns_expected_error(self, client, mock_api):
+        """At least one of temperature/heating_enabled must be provided."""
+        response = client.post("/zones/1/set")
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"] == "At least the temp or heating mode should be given"
+        mock_api.set_device_characteristics.assert_not_called()
+
+    def test_set_zone_temp_zero_and_heating_true_returns_conflict(self, client, mock_api):
+        """temperature=0 conflicts with heating_enabled=true."""
+        response = client.post("/zones/1/set?temperature=0&heating_enabled=true")
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"] == "Can not switch on and off heating with one call"
+        mock_api.set_device_characteristics.assert_not_called()
+
+    def test_set_zone_temp_minus_one_and_heating_false_returns_conflict(self, client, mock_api):
+        """temperature=-1 conflicts with heating_enabled=false."""
+        response = client.post("/zones/1/set?temperature=-1&heating_enabled=false")
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"] == "Can not switch on and off heating with one call"
+        mock_api.set_device_characteristics.assert_not_called()
+
+
+    def test_set_zone_temp_without_implicit_mode_does_not_set_heating(self, client, mock_api):
+        """When no_implicit_mode=true, temperature alone should not auto-set heating."""
+        response = client.post("/zones/1/set?temperature=20&no_implicit_mode=true")
+
+        assert response.status_code == 200
+        call_args = mock_api.set_device_characteristics.call_args
+        chars = call_args[0][1]
+
+        assert 'target_temperature' in chars
+        assert chars['target_temperature'] == 20
+        assert 'target_heating_cooling_state' not in chars
+
+    def test_set_zone_temp_wrong_temperaturer(self, client, mock_api):
+        """When temperature is illegal return 400 no setting change."""
+        response = client.post("/zones/1/set?temperature=4.99")
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"] == "Temperature must be -1, 0, or between 5 and 30°C"
+        mock_api.set_device_characteristics.assert_not_called()
+
+        response = client.post("/zones/1/set?temperature=30.1")
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"] == "Temperature must be -1 (resume), 0 (off), or between 5 and 30°C"
+        mock_api.set_device_characteristics.assert_not_called()
+
+        response = client.post("/zones/1/set?temperature=-1.1")
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"] == "Temperature must be -1 (resume), 0 (off), or between 5 and 30°C"
+        mock_api.set_device_characteristics.assert_not_called()
+
+
+    def test_set_zone_persistant_resume_uses_cloud_call(self, client, mock_api):
+        """temperature=-1 with persistant=true should use cloud API, not bridge write."""
+
+        class FakeCloudApi:
+            def is_authenticated(self):
+                return True
+
+            _switch_zones_to_smartschedule = AsyncMock(return_value={"ok": True})
+            _switch_zones_persistant_off = AsyncMock(return_value={"ok": True})
+
+        mock_api.cloud_api = FakeCloudApi()
+
+        response = client.post("/zones/1/set?temperature=-1&persistant=true")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["handling"] == "cloud_call"
+        assert data["applied"]["target_temperature"] is None
+        assert data["applied"]["heating_enabled"] is True
+
+        mock_api.set_device_characteristics.assert_not_called()
+        mock_api.cloud_api._switch_zones_to_smartschedule.assert_called_once_with([100])
+        mock_api.cloud_api._switch_zones_persistant_off.assert_not_called()
+
+    def test_set_zone_persistant_off_uses_cloud_call(self, client, mock_api):
+        """heating_enabled=false with persistant=true should use cloud API off call."""
+
+        class FakeCloudApi:
+            def is_authenticated(self):
+                return True
+
+            _switch_zones_to_smartschedule = AsyncMock(return_value={"ok": True})
+            _switch_zones_persistant_off = AsyncMock(return_value={"ok": True})
+
+        mock_api.cloud_api = FakeCloudApi()
+
+        response = client.post("/zones/1/set?heating_enabled=false&persistant=true")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["handling"] == "cloud_call"
+        assert data["applied"]["target_temperature"] is None
+        assert data["applied"]["heating_enabled"] is False
+
+        mock_api.set_device_characteristics.assert_not_called()
+        mock_api.cloud_api._switch_zones_persistant_off.assert_called_once_with([100])
+        mock_api.cloud_api._switch_zones_to_smartschedule.assert_not_called()
+
+    def test_set_zone_persistant_with_temperature_still_uses_local_handling(self, client, mock_api):
+        """persistant=true is ignored when a temperature setpoint is provided."""
+
+        class FakeCloudApi:
+            def is_authenticated(self):
+                return True
+
+            _switch_zones_to_smartschedule = AsyncMock(return_value={"ok": True})
+            _switch_zones_persistant_off = AsyncMock(return_value={"ok": True})
+
+        mock_api.cloud_api = FakeCloudApi()
+
+        response = client.post("/zones/1/set?temperature=20&persistant=true")
+
+        assert response.status_code == 200
+        mock_api.set_device_characteristics.assert_called_once()
+        mock_api.cloud_api._switch_zones_to_smartschedule.assert_not_called()
+        mock_api.cloud_api._switch_zones_persistant_off.assert_not_called()
+
+    def test_set_zone_temperature_calls_bridge(self, client, mock_api):
+        """Test that setting zone temperature sends correct command to bridge."""
+        response = client.post("/zones/1/set?temperature=22.5")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Check device_id (leader device 1)
+        assert call_args[0][0] == 1
+
+        # Check characteristics passed
+        chars = call_args[0][1]
+        assert 'target_temperature' in chars
+        assert chars['target_temperature'] == 22.5
+
+    def test_set_zone_heating_enabled_calls_bridge(self, client, mock_api):
+        """Test that enabling heating sends correct command to bridge."""
+        response = client.post("/zones/1/set?heating_enabled=true")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Check characteristics passed
+        chars = call_args[0][1]
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 1  # Heating ON
+
+    def test_set_zone_heating_disabled_calls_bridge(self, client, mock_api):
+        """Test that disabling heating sends correct command to bridge."""
+        response = client.post("/zones/1/set?heating_enabled=false")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Check characteristics passed
+        chars = call_args[0][1]
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 0  # Heating OFF
+
+    def test_set_zone_temperature_and_heating_calls_bridge(self, client, mock_api):
+        """Test that setting both temperature and heating sends both commands."""
+        response = client.post("/zones/1/set?temperature=21&heating_enabled=true")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Check characteristics passed
+        chars = call_args[0][1]
+        assert 'target_temperature' in chars
+        assert chars['target_temperature'] == 21
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 1
+
+    def test_set_zone_temperature_zero_disables_heating_bridge_call(self, client, mock_api):
+        """Test that temperature=0 generates disable heating command."""
+        response = client.post("/zones/1/set?temperature=0")
+
+        assert response.status_code == 200
+
+        # Verify bridge command was called with heating disabled
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        chars = call_args[0][1]
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 0
+        # Temperature should NOT be set when using 0
+        assert 'target_temperature' not in chars
+
+    def test_set_zone_temperature_resume_schedule_bridge_call(self, client, mock_api):
+        """Test that temperature=-1 generates heating enable without temperature."""
+        response = client.post("/zones/1/set?temperature=-1")
+
+        assert response.status_code == 200
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        chars = call_args[0][1]
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 1
+        # Temperature should NOT be set when using -1
+        assert 'target_temperature' not in chars
+
+    def test_set_zone_temperature_resume_schedule_bridge_call_2(self, client, mock_api):
+        """Test that temperature=-1 generates heating enable without temperature."""
+        response = client.post("/zones/3/set?temperature=-1&heating_enabled=true")
+
+        assert response.status_code == 200
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        chars = call_args[0][1]
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 1
+        # Temperature should NOT be set when using -1
+        assert 'target_temperature' not in chars
+
+
+    def test_set_zone_calls_leader_device(self, client, mock_api):
+        """Test that zone control calls the zone's leader device."""
+        response = client.post("/zones/1/set?temperature=20")
+
+        assert response.status_code == 200
+
+        # Verify bridge command was called on leader device (device_id=1)
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        device_id = call_args[0][0]
+        assert device_id == 1  # Leader device ID for zone 1
+
+    def test_set_zone_multiple_calls(self, client, mock_api):
+        """Test that multiple zone control calls work correctly."""
+        # First call
+        response1 = client.post("/zones/1/set?temperature=20")
+        assert response1.status_code == 200
+
+        # Reset mock
+        mock_api.set_device_characteristics.reset_mock()
+
+        # Second call on different zone
+        response2 = client.post("/zones/2/set?temperature=22")
+        assert response2.status_code == 200
+
+        # Verify second call was to correct leader (device_id=2)
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        device_id = call_args[0][0]
+        assert device_id == 2  # Leader device ID for zone 2
+
+    def test_set_zone_temperature_characteristic_uuid(self, client, mock_api):
+        """Test that temperature characteristic uses correct UUID."""
+        response = client.post("/zones/1/set?temperature=23")
+
+        assert response.status_code == 200
+
+        call_args = mock_api.set_device_characteristics.call_args
+        chars = call_args[0][1]
+
+        # The key should be 'target_temperature' (implementation detail)
+        assert 'target_temperature' in chars
+        assert chars['target_temperature'] == 23
+
+    def test_set_zone_heating_characteristic_uuid(self, client, mock_api):
+        """Test that heating characteristic uses correct HomeKit service."""
+        response = client.post("/zones/1/set?heating_enabled=true")
+
+        assert response.status_code == 200
+
+        call_args = mock_api.set_device_characteristics.call_args
+        chars = call_args[0][1]
+
+        # The key should be 'target_heating_cooling_state'
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 1
+
+    def test_set_zone_temperature_wrong_zone_id(self, client, mock_api):
+        """Test that temperature=-1 generates heating enable without temperature."""
+        response = client.post("/zones/999/set?temperature=22")
+
+        assert response.status_code == 404
+
+        # Verify bridge command was not called
+        mock_api.set_device_characteristics.assert_not_called()
+
+    def test_set_zone_temperature_and_mode(self, client, mock_api):
+        """Test that setting both temperature and heating mode sends both commands."""
+        response = client.post("/zones/1/set?temperature=21&heating_mode=1")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Check characteristics passed
+        chars = call_args[0][1]
+        assert 'target_temperature' in chars
+        assert chars['target_temperature'] == 21
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 1
+
+    def test_set_heating_mode_off(self, client, mock_api):
+        """Test that setting  heating sends commands."""
+        response = client.post("/zones/1/set?heating_mode=0")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Check characteristics passed
+        chars = call_args[0][1]
+        assert 'target_temperature' not in chars
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 0
+
+    def test_set_heating_mode_on_no_temperature(self, client, mock_api):
+        """Test that setting  heating sends commands."""
+        response = client.post("/zones/1/set?heating_mode=1")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Check characteristics passed
+        chars = call_args[0][1]
+        assert 'target_temperature' not in chars
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 1
+
+    def test_set_cool_heating_mode_in_heater_device(self, client, mock_api):
+        """Test that cool mode is not set for heating device."""
+        response = client.post("/zones/1/set?heating_mode=2")
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"] == "Invalid heating_mode value. Must be 0 (OFF) or 1 (HEAT)"
+
+        # Verify bridge command was not called
+        mock_api.set_device_characteristics.assert_not_called()
+
+    def test_set_heating_mode_on_airco_zone(self, client, mock_api):
+        """Test that setting  heating sends commands."""
+        response = client.post("/zones/4/set?heating_mode=2")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Check characteristics passed
+        chars = call_args[0][1]
+        assert 'target_temperature' not in chars
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 2
+
+    def test_set_airco_mode_return_to_previous(self, client, mock_api, state_manager):
+        """Test that setting mode returns to previous mode."""
+        response = client.post("/zones/4/set?heating_mode=1")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # Verify bridge command was called
+        assert mock_api.set_device_characteristics.call_count == 1
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Check characteristics passed, switching to HEAT mode should set heating_cooling_state to 1
+        chars = call_args[0][1]
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 1
+
+        response = client.post("/zones/4/set?heating_mode=0")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # Verify bridge command was called, switching to OFF mode should set heating_cooling_state to 0
+        assert mock_api.set_device_characteristics.call_count == 2
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Update device history with mode = 1, fake HomeKit event update in HEAT mode.
+        conn = sqlite3.connect(state_manager.db_path)
+        conn.execute(
+            "INSERT INTO device_state_history (device_id, timestamp_bucket, current_temperature, target_temperature, current_heating_cooling_state, target_heating_cooling_state, humidity, battery_level, window) " \
+            "VALUES (5, '20260229110500', 22.0, 21.0, 1, 1, 54, 70, 0)"
+        )
+        conn.commit()
+        conn.close()
+
+        # Check characteristics passed
+        chars = call_args[0][1]
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 0
+
+        response = client.post("/zones/4/set?heating_enabled=true")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # Verify bridge command was called
+        assert mock_api.set_device_characteristics.call_count == 3
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Check characteristics passed. switching back to resume schedule should return to previous mode, which is HEAT (1)
+        chars = call_args[0][1]
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 1
+
+    def test_set_airco_mode_return_to_previous_when_temp_set(self, client, mock_api, state_manager):
+        """Test that setting mode returns to previous mode."""
+
+        response = client.post("/zones/4/set?heating_mode=2")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # Verify bridge command was called
+        assert mock_api.set_device_characteristics.call_count == 1
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Check characteristics passed
+        chars = call_args[0][1]
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 2
+
+        # Update device history with mode = 2, fake HomeKit event update in COOL mode.
+        conn = sqlite3.connect(state_manager.db_path)
+        conn.execute(
+            "INSERT INTO device_state_history (device_id, timestamp_bucket, current_temperature, target_temperature, current_heating_cooling_state, target_heating_cooling_state, humidity, battery_level, window) " \
+            "VALUES (5, '20260229110500', 19.0, 18.0, 2, 2, 54, 70, 0)"
+        )
+        conn.commit()
+        conn.close()
+
+        response = client.post("/zones/4/set?temperature=22")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+
+        # Verify bridge command was called
+        assert mock_api.set_device_characteristics.call_count == 2
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Check characteristics passed
+        chars = call_args[0][1]
+        assert 'target_temperature' in chars
+        assert chars['target_temperature'] == 22
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 2
+
+    def test_set_airco_invalid_mode(self, client):
+        """Test that setting ivalid mode returns ."""
+        response = client.post("/zones/4/set?heating_mode=3")
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"] == "Invalid heating_mode value. Must be 0 (OFF), 1 (HEAT) or 2 (COOL)"
+
+class TestSetAllZonesBridgeCommands:
+    """Test suite for bulk all-zones control."""
+
+    def test_set_all_zones_local_handling_calls_bridge_for_each_zone(self, client, mock_api):
+        """Bulk local all-zones control should forward one bridge write per zone."""
+        response = client.post("/zones/set?heating_enabled=true")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["count"] == 5
+        assert data["handling"] == "local_handling"
+        assert data["applied"]["heating_enabled"] is True
+
+        assert mock_api.set_device_characteristics.await_count == 5
+        called_device_ids = [call.args[0] for call in mock_api.set_device_characteristics.await_args_list]
+        assert called_device_ids == [1, 2, 3, 5, 6]
+
+        assert data["error_count"] == 0
+        assert data["errors"] == []
+
+        assert len(data["zones"]) == 5
+        assert data["zones"][0]["mode"] == "HEAT"
+        assert data["zones"][1]["mode"] == "HEAT"
+        assert data["zones"][2]["mode"] == "HEAT"
+        assert data["zones"][3]["mode"] == "COOL"
+        assert data["zones"][4]["mode"] == "HEAT"
+
+    def test_set_all_zones_persistant_true_uses_single_cloud_call(self, client, mock_api):
+        """Bulk persistent all-zones control should use one cloud API call."""
+
+        class FakeCloudApi:
+            def is_authenticated(self):
+                return True
+
+            _switch_zones_to_smartschedule = AsyncMock(return_value={"ok": True})
+            _switch_zones_persistant_off = AsyncMock(return_value={"ok": True})
+
+        mock_api.cloud_api = FakeCloudApi()
+
+        response = client.post("/zones/set?heating_enabled=true&persistant=true")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["count"] == 5
+        assert data["handling"] == "cloud_call"
+        assert data["applied"]["target_temperature"] is None
+        assert data["applied"]["heating_enabled"] is True
+
+        mock_api.set_device_characteristics.assert_not_called()
+        mock_api.cloud_api._switch_zones_to_smartschedule.assert_called_once_with([100, 101, 102, 103, 104])
+        mock_api.cloud_api._switch_zones_persistant_off.assert_not_called()
+
+    def test_set_all_zones_persistant_false_uses_single_cloud_call(self, client, mock_api):
+        """Bulk persistent off should use the cloud off helper."""
+
+        class FakeCloudApi:
+            def is_authenticated(self):
+                return True
+
+            _switch_zones_to_smartschedule = AsyncMock(return_value={"ok": True})
+            _switch_zones_persistant_off = AsyncMock(return_value={"ok": True})
+
+        mock_api.cloud_api = FakeCloudApi()
+
+        response = client.post("/zones/set?heating_enabled=false&persistant=true")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["handling"] == "cloud_call"
+        assert data["applied"]["heating_enabled"] is False
+
+        mock_api.set_device_characteristics.assert_not_called()
+        mock_api.cloud_api._switch_zones_persistant_off.assert_called_once_with([100, 101, 102, 103, 104])
+        mock_api.cloud_api._switch_zones_to_smartschedule.assert_not_called()
+
+    def test_set_all_zones_requires_heating_enabled(self, client, mock_api):
+        """Bulk all-zones endpoint requires heating_enabled."""
+        response = client.post("/zones/set")
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"] == "At heating mode should be given"
+        mock_api.set_device_characteristics.assert_not_called()
+
+class TestSetDeviceBridgeCommands:
+    """Test suite for set_device route bridge command generation."""
+
+    def test_set_device_forwards_to_zone(self, client, mock_api):
+        """Test that device control forwards to zone control which calls bridge."""
+        response = client.post("/devices/1/set?temperature=22")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["controlled_via"] == "zone"
+
+        # Verify bridge command was called through zone control
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Should call leader device
+        device_id = call_args[0][0]
+        assert device_id == 1
+
+    def test_set_device_calls_bridge(self, client, mock_api):
+        """Test that setting device temperature sends command to bridge."""
+        response = client.post("/devices/1/set?temperature=21")
+
+        assert response.status_code == 200
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        # Check characteristics
+        chars = call_args[0][1]
+        assert 'target_temperature' in chars
+        assert chars['target_temperature'] == 21
+
+    def test_set_device_heating_enabled_bridge_call(self, client, mock_api):
+        """Test that enabling device heating sends command to bridge."""
+        response = client.post("/devices/1/set?heating_enabled=true")
+
+        assert response.status_code == 200
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        chars = call_args[0][1]
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 1
+
+    def test_set_device_temperature_and_heating_bridge_call(self, client, mock_api):
+        """Test that setting both device temp and heating sends both commands."""
+        response = client.post("/devices/1/set?temperature=20&heating_enabled=true")
+
+        assert response.status_code == 200
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        chars = call_args[0][1]
+        assert 'target_temperature' in chars
+        assert chars['target_temperature'] == 20
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 1
+
+    def test_set_device_temperature_zero_bridge_call(self, client, mock_api):
+        """Test that device temperature=0 sends disable heating to bridge."""
+        response = client.post("/devices/1/set?temperature=0")
+
+        assert response.status_code == 200
+
+        # Verify bridge command was called with heating disabled
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        chars = call_args[0][1]
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 0
+
+    def test_set_device_different_devices(self, client, mock_api):
+        """Test that different device controls call correct leaders."""
+        # Device 1 (zone 1, leader 1)
+        response1 = client.post("/devices/1/set?temperature=20")
+        assert response1.status_code == 200
+
+        call_args1 = mock_api.set_device_characteristics.call_args
+        assert call_args1[0][0] == 1  # Leader device 1
+
+        # Reset mock
+        mock_api.set_device_characteristics.reset_mock()
+
+        # Device 2 (zone 2, leader 2)
+        response2 = client.post("/devices/2/set?temperature=22")
+        assert response2.status_code == 200
+
+        call_args2 = mock_api.set_device_characteristics.call_args
+        assert call_args2[0][0] == 2  # Leader device 2
+
+    def test_set_device_with_implicit_heating_enabled(self, client, mock_api):
+        """Test that setting device temperature >= 5 implicitly enables heating."""
+        response = client.post("/devices/1/set?temperature=18")
+
+        assert response.status_code == 200
+
+        call_args = mock_api.set_device_characteristics.call_args
+        chars = call_args[0][1]
+
+        # Both temperature and heating should be set
+        assert 'target_temperature' in chars
+        assert chars['target_temperature'] == 18
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 1
+
+
+class TestSetThermostatBridgeCommands:
+    """Test suite for set_thermostat route bridge command generation."""
+
+    def test_set_thermostat_forwards_to_zone(self, client, mock_api):
+        """Test that thermostat control forwards to zone control."""
+        response = client.post("/thermostats/1/set?temperature=21")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["controlled_via"] == "zone"
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+
+    def test_set_thermostat_calls_bridge(self, client, mock_api):
+        """Test that thermostat temperature command reaches bridge."""
+        response = client.post("/thermostats/1/set?temperature=23")
+
+        assert response.status_code == 200
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        chars = call_args[0][1]
+        assert 'target_temperature' in chars
+        assert chars['target_temperature'] == 23
+
+    def test_set_thermostat_calls_bridge_to_zero(self, client, mock_api):
+        """Test that thermostat temperature 0 command reaches bridge."""
+        response = client.post("/thermostats/1/set?temperature=0")
+
+        assert response.status_code == 200
+
+        # Verify bridge command was called
+        mock_api.set_device_characteristics.assert_called_once()
+        call_args = mock_api.set_device_characteristics.call_args
+
+        chars = call_args[0][1]
+
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 0
+
+
+    def test_set_thermostat_heating_enabled_bridge_call(self, client, mock_api):
+        """Test that thermostat heating enable reaches bridge."""
+        response = client.post("/thermostats/1/set?heating_enabled=true")
+
+        assert response.status_code == 200
+
+        call_args = mock_api.set_device_characteristics.call_args
+        chars = call_args[0][1]
+
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 1
+
+    def test_set_thermostat_temperature_and_heating_bridge_call(self, client, mock_api):
+        """Test that thermostat with both parameters sends both to bridge."""
+        response = client.post("/thermostats/1/set?temperature=19&heating_enabled=false")
+
+        assert response.status_code == 200
+
+        call_args = mock_api.set_device_characteristics.call_args
+        chars = call_args[0][1]
+
+        assert 'target_temperature' in chars
+        assert chars['target_temperature'] == 19
+        assert 'target_heating_cooling_state' in chars
+        assert chars['target_heating_cooling_state'] == 0
+
+
+class TestBridgeCommandErrorHandling:
+    """Test suite for error handling in bridge commands."""
+
+    def test_set_zone_bridge_failure_returns_error(self, client, mock_api):
+        """Test that bridge command failure returns proper error."""
+        mock_api.set_device_characteristics.side_effect = Exception("Connection lost")
+
+        response = client.post("/zones/1/set?temperature=20")
+
+        assert response.status_code == 500
+        data = response.json()
+        assert "Failed to set zone control" in data["detail"]
+
+    def test_set_device_bridge_failure_returns_error(self, client, mock_api):
+        """Test that device command bridge failure returns proper error."""
+        mock_api.set_device_characteristics.side_effect = Exception("Timeout")
+
+        response = client.post("/devices/1/set?temperature=20")
+
+        assert response.status_code == 500
+
+    def test_set_zone_no_bridge_connection(self, client, mock_api):
+        """Test that setting zone with no bridge connection fails gracefully."""
+        mock_api.pairing = None
+
+        response = client.post("/zones/1/set?temperature=20")
+
+        assert response.status_code == 503
+        data = response.json()
+        assert "Bridge not connected" in data["detail"]
+
+    def test_set_zone_api_not_initialized(self):
+        """Test that setting zone when API not initialized fails."""
+        from tado_local.routes import create_app, register_routes
+
+        app = create_app()
+        register_routes(app, lambda: None)
+        test_client = TestClient(app)
+
+        response = test_client.post("/zones/1/set?temperature=20")
+
+        assert response.status_code == 503
+
+
+class TestBridgeCommandValidation:
+    """Test suite for validation before bridge commands."""
+
+    def test_set_zone_invalid_temperature_no_bridge_call(self, client, mock_api):
+        """Test that invalid temperature prevents bridge call."""
+        response = client.post("/zones/1/set?temperature=35")
+
+        assert response.status_code == 400
+        # Bridge should NOT have been called
+        mock_api.set_device_characteristics.assert_not_called()
+        data = response.json()
+        assert data["detail"] == "Temperature must be -1 (resume), 0 (off), or between 5 and 30°C"
+
+
+    def test_set_zone_no_parameters_no_bridge_call(self, client, mock_api):
+        """Test that missing parameters prevent bridge call."""
+        response = client.post("/zones/1/set")
+
+        assert response.status_code == 400
+        # Bridge should NOT have been called
+        mock_api.set_device_characteristics.assert_not_called()
+        data = response.json()
+        assert data["detail"] == "At least the temp or heating mode should be given"
+
+    def test_set_zone_nonexistent_zone_no_bridge_call(self, client, mock_api):
+        """Test that nonexistent zone prevents bridge call."""
+        response = client.post("/zones/999/set?temperature=20")
+
+        assert response.status_code == 404
+        # Bridge should NOT have been called
+        mock_api.set_device_characteristics.assert_not_called()
+
+    def test_set_device_nonexistent_device_no_bridge_call(self, client, mock_api):
+        """Test that nonexistent device prevents bridge call."""
+        response = client.post("/devices/999/set?temperature=20")
+
+        assert response.status_code == 404
+        # Bridge should NOT have been called
+        mock_api.set_device_characteristics.assert_not_called()
+
+
+class TestBaseAPIHandling:
+    def test_get_root_returns_welcome_page(self, client):
+        """Test GET / returns welcome page"""
+        response = client.get("/")
+
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+        assert "<html" in response.text.lower() and "</html>" in response.text.lower()
+        assert "<title>Tado Local</title>" in response.text
+
+    def test_get_root_returns_api_info_when_index_missing(self, monkeypatch):
+        """Test GET / returns API info when index.html is missing."""
+        import tado_local.routes as routes
+        from fastapi.testclient import TestClient
+
+        original_exists = routes.Path.exists
+
+        def fake_exists(path):
+            if path.name == "index.html":
+                return False
+            return original_exists(path)
+
+        monkeypatch.setattr(routes.Path, "exists", fake_exists)
+
+        app = routes.create_app()
+        routes.register_routes(app, lambda: None)
+        client = TestClient(app)
+
+        response = client.get("/")
+
+        assert response.status_code == 200
+        assert "application/json" in response.headers["content-type"]
+        data = response.json()
+        assert data["service"] == "Tado Local"
+        assert data["api_info"] == "/api"
+        assert "Web UI not found" in data["note"]
+
+
+    def test_get_favicon_returns_icon(self, client):
+        """Test GET /favicon.ico returns the favicon."""
+        response = client.get("/favicon.ico")
+
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "image/svg+xml"
+        assert response.content.startswith(b"<svg")
+        # to satify Windows vs Linux line ending differences in the SVG file
+        assert response.content.endswith(b"</svg>\r\n") or \
+                response.content.endswith(b"</svg>\n")
+
+    def test_get_robots_txt_returns_disallow_all(self, client):
+        """Test GET /robots.txt returns disallow all."""
+        response = client.get("/robots.txt")
+
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "text/plain; charset=utf-8"
+        # to satify Windows vs Linux line ending differences in the robots.txt file
+        assert "User-agent: *\r\nDisallow: /\r\n" in response.text or \
+                "User-agent: *\nDisallow: /\n" in response.text
+
+
+    def test_get_robots_txt_fallback_when_missing(self, monkeypatch):
+        """Test GET /robots.txt returns fallback when file is missing."""
+        import tado_local.routes as routes
+        from fastapi.testclient import TestClient
+
+        original_exists = routes.Path.exists
+
+        def fake_exists(path):
+            if path.name == "robots.txt":
+                return False
+            return original_exists(path)
+
+        monkeypatch.setattr(routes.Path, "exists", fake_exists)
+
+        app = routes.create_app()
+        routes.register_routes(app, lambda: None)
+        client = TestClient(app)
+
+        response = client.get("/robots.txt")
+
+        assert response.status_code == 200
+        assert "text/plain" in response.headers["content-type"]
+        assert "User-agent: *\nDisallow: /\n" in response.text
+
+    def test_get_api_structure_returns_valid_json(self, client):
+        """Test GET /api-structure returns valid JSON."""
+        response = client.get("/api")
+
+        assert response.status_code == 200
+        assert "application/json" in response.headers["content-type"]
+        data = response.json()
+        assert isinstance(data, dict)
+        assert "service" in data
+        assert data['service'] == "Tado Local"
+        assert "endpoints" in data
+        assert isinstance(data["endpoints"], dict)
+
+        endpoints = data["endpoints"]
+        assert "devices" in endpoints
+        assert endpoints["devices"] == "/devices"
+        assert "zones" in endpoints
+        assert endpoints["zones"] == "/zones"
+        assert "thermostats" in endpoints
+        assert endpoints["thermostats"] == "/thermostats"
+        assert "events" in endpoints
+        assert endpoints["events"] == "/events"
+        assert "accessories" in endpoints
+        assert endpoints["accessories"] == "/accessories"
+        assert "refresh" in endpoints
+        assert endpoints["refresh"] == "/refresh"
+        assert "refresh_cloud" in endpoints
+        assert endpoints["refresh_cloud"] == "/refresh/cloud"
+
+    def test_get_api_docs_returns_html(self, client):
+        """Test GET /docs returns HTML documentation."""
+        response = client.get("/docs")
+
+        assert response.status_code == 200
+        assert "text/html" in response.headers["content-type"]
+        assert "<html" in response.text.lower() and "</html>" in response.text.lower()
+
+    def test_invalid_route_returns_404(self, client):
+        """Test that an invalid route returns 404."""
+        response = client.get("/invalid-route")
+
+        assert response.status_code == 404
+        data = response.json()
+        assert "detail" in data
+        assert data["detail"] == "Not Found"
+
+    def test_invalid_method_returns_405(self, client):
+        """Test that an invalid method on a valid route returns 405."""
+        response = client.put("/devices")
+
+        assert response.status_code == 405
+        data = response.json()
+        assert "detail" in data
+        assert "Method Not Allowed" in data["detail"]
+
+    def test_api_refresh_endpoint_exists(self, client):
+        """Test that the API refresh endpoint exists and returns success."""
+        response = client.post("/refresh")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert "fetched_at" in data[0]
+
+    def test_api_refresh_cloud_endpoint_exists(self, client):
+        """Test that the API refresh endpoint exists and returns success."""
+        response = client.post("/refresh/cloud")
+
+        assert response.status_code == 503
+        data = response.json()
+        assert "detail" in data
+        assert "Cloud API not available" in data["detail"]
+
+    def test_api_refresh_cloud_with_mock_data(self, client, mock_api, monkeypatch):
+        """Test that /refresh/cloud returns success with mock cloud data."""
+        import tado_local.sync as sync_module
+
+        class FakeCloudApi:
+            def __init__(self):
+                self.get_zone_states = AsyncMock(return_value=[{"zone": 1}])
+                self.get_device_list = AsyncMock(return_value=[{"device": "a"}, {"device": "b"}])
+
+            def is_authenticated(self):
+                return True
+
+        class FakeSync:
+            def __init__(self, db_path):
+                self.db_path = db_path
+
+            async def sync_all(self, *args, **kwargs):
+                return True
+
+        monkeypatch.setattr(sync_module, "TadoCloudSync", FakeSync)
+        mock_api.cloud_api = FakeCloudApi()
+
+        response = client.post("/refresh/cloud?battery_only=true")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["devices_synced"] == 2
+        assert data["refreshed"] == ["battery_status", "device_status"]
+
+    def test_api_refresh_cloud_with_full_refresh(self, client, mock_api, monkeypatch):
+        """Test that /refresh/cloud returns success with full refresh data."""
+        import tado_local.sync as sync_module
+
+        class FakeCloudApi:
+            def __init__(self):
+                self.get_home_info = AsyncMock(return_value={"name": "My Home"})
+                self.get_zones = AsyncMock(return_value=[{"id": 1}, {"id": 2}])
+                self.get_zone_states = AsyncMock(return_value=[{"zone": 1}])
+                self.get_device_list = AsyncMock(return_value=[{"device": "a"}])
+
+            def is_authenticated(self):
+                return True
+
+        class FakeSync:
+            def __init__(self, db_path):
+                self.db_path = db_path
+
+            async def sync_all(self, *args, **kwargs):
+                return True
+
+        monkeypatch.setattr(sync_module, "TadoCloudSync", FakeSync)
+        mock_api.cloud_api = FakeCloudApi()
+
+        response = client.post("/refresh/cloud")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["home_name"] == "My Home"
+        assert data["zones_synced"] == 2
+        assert data["devices_synced"] == 1
+        assert data["refreshed"] == ["home_info", "zones", "battery_status", "device_status"]
+
+    def test_get_api_key_validates_env_keys(self, monkeypatch):
+        """Test that get_api_key enforces keys from environment."""
+        import importlib
+        from fastapi.testclient import TestClient
+        import tado_local.routes as routes
+
+        monkeypatch.setenv("TADO_API_KEYS", "valid-key other-key")
+        routes = importlib.reload(routes)
+
+        app = routes.create_app()
+        routes.register_routes(app, lambda: None)
+        client = TestClient(app)
+
+        response = client.get("/api")
+        assert response.status_code == 401
+
+        response = client.get("/api", headers={"Authorization": "Bearer bad-key"})
+        assert response.status_code == 401
+
+        response = client.get("/api", headers={"Authorization": "Bearer valid-key"})
+        assert response.status_code == 200
+
+        response = client.get("/api", headers={"Authorization": "Bearer other-key"})
+        assert response.status_code == 200
+
+        monkeypatch.delenv("TADO_API_KEYS", raising=False)
+        importlib.reload(routes)
+
+    def test_well_known_route_exists(self, client):
+        """Test that .well-known route exists."""
+        response = client.get("/.well-known/test")
+        assert response.status_code == 404
+
+class TestOpenWindowSettings:
+    """Test suite for open window settings in device state."""
+
+    def test_zone_set_window_timeouts(self, client, state_manager):
+        """Test that zone open window timeouts settable."""
+        response = client.get("/zones/1")
+        assert response.status_code == 200
+        databefore = response.json()
+        assert "window_open_time" in databefore['zone']
+        assert databefore['zone']['window_open_time'] == 33
+        assert "window_rest_time" in databefore['zone']
+        assert databefore['zone']['window_rest_time'] == 66
+
+        response = client.post("/zones/1/windowtimeouts?window_open_time=100&window_rest_time=200")
+        assert response.status_code == 200
+
+        response = client.get("/zones/1")
+        assert response.status_code == 200
+        dataafter = response.json()
+
+        assert "window_open_time" in dataafter['zone']
+        assert dataafter['zone']['window_open_time'] == 100
+        assert "window_rest_time" in dataafter['zone']
+        assert dataafter['zone']['window_rest_time'] == 200
+
+    def test_zone_set_window_open_timeout(self, client, state_manager):
+        """Test that zone open window timeouts settable."""
+        response = client.post("/zones/1/windowtimeouts?window_open_time=100")
+        assert response.status_code == 200
+
+        response = client.get("/zones/1")
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "window_open_time" in data['zone']
+        assert data['zone']['window_open_time'] == 100
+        assert "window_rest_time" in data['zone']
+        assert data['zone']['window_rest_time'] == 66
+
+    def test_zone_set_window_rest_timeout(self, client, state_manager):
+        """Test that zone open window timeouts settable."""
+
+        response = client.post("/zones/1/windowtimeouts?window_rest_time=200")
+        assert response.status_code == 200
+
+        response = client.get("/zones/1")
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "window_open_time" in data['zone']
+        assert data['zone']['window_open_time'] == 33
+        assert "window_rest_time" in data['zone']
+        assert data['zone']['window_rest_time'] == 200
+
+    def test_zone_set_window_timeouts_invalid(self, client, state_manager):
+        """Test that invalid window timeout values are rejected."""
+        response = client.post("/zones/1/windowtimeouts?window_open_time=-10&window_rest_time=200")
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"] == "window_open_time must be between 1 and 480 minutes, or -1 to reset to default"
+
+        response = client.post("/zones/1/windowtimeouts?window_open_time=100&window_rest_time=-20")
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"] == "window_rest_time must be between 1 and 480 minutes, or -1 to reset to default"
+
+        response = client.post("/zones/1/windowtimeouts?window_open_time=abc&window_rest_time=200")
+        assert response.status_code == 422
+        data = response.json()
+        assert data["detail"][0]["msg"] == "Input should be a valid integer, unable to parse string as an integer"
+
+        response = client.post("/zones/1/windowtimeouts?window_open_time=100&window_rest_time=xyz")
+        assert response.status_code == 422
+        data = response.json()
+        assert data["detail"][0]["msg"] == "Input should be a valid integer, unable to parse string as an integer"
+
+
+    def test_zone_get_set_window_rest_timeout_with_default_values(self, client, state_manager):
+        """Test that zone default open window timeouts settable."""
+
+        response = client.get("/zones/5")
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "window_open_time" in data['zone']
+        assert data['zone']['window_open_time'] == 30   # Shall not be None as default value is set to 30 in db-schema
+        assert "window_rest_time" in data['zone']
+        assert data['zone']['window_rest_time'] == 15   # Shall not be None as default value is set to 15 in db-schema
+
+        response = client.post("/zones/5/windowtimeouts?window_rest_time=200&window_open_time=210")
+        assert response.status_code == 200
+
+        response = client.get("/zones/5")
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "window_open_time" in data['zone']
+        assert data['zone']['window_open_time'] == 210
+        assert "window_rest_time" in data['zone']
+        assert data['zone']['window_rest_time'] == 200
+
+class TestPurgeHistoryInfo:
+    """Test suite for GET /purgehistory/info endpoint."""
+
+    @pytest.fixture
+    def purgehistory_info_setup(self):
+        mock_state_manager = Mock()
+        mock_state_manager.get_device_history_status_info.return_value = {
+            "total_records": 5,
+            "oldest_record": "2026-03-01T00:00:00",
+            "database_size": 12345,
+            "purge_history_days": 14,
+        }
+
+        mock_tado_api = SimpleNamespace(
+            state_manager=mock_state_manager,
+            cloud_api=SimpleNamespace(purge_history_days=14),
+        )
+
+        app = create_app()
+        register_routes(app, lambda: mock_tado_api)
+
+        client = TestClient(app)
+        return client, mock_tado_api, mock_state_manager
+
+    @pytest.fixture
+    def purgehistory_info_db_setup(self, test_db):
+        """Setup using real database, routes and DeviceStateManager."""
+        from tado_local.routes import create_app, register_routes
+        from tado_local.state import DeviceStateManager
+
+        state_manager = DeviceStateManager(test_db)
+
+        mock_tado_api = SimpleNamespace(
+            state_manager=state_manager,
+            cloud_api=SimpleNamespace(purge_history_days=14),
+            pairing=None,
+        )
+
+        app = create_app()
+        register_routes(app, lambda: mock_tado_api)
+
+        client = TestClient(app)
+        return client, mock_tado_api, state_manager
+
+    def test_get_purge_history_info_returns_correct_structure(self, purgehistory_info_setup):
+        client, mock_tado_api, mock_state_manager = purgehistory_info_setup
+
+        response = client.get("/purgehistory/info")
+
+        assert response.status_code == 200
+        assert response.json() == {
+            "total_records": 5,
+            "oldest_record": "2026-03-01T00:00:00",
+            "database_size": 12345,
+            "purge_history_days": 14,
+        }
+
+        mock_state_manager.get_device_history_status_info.assert_called_once_with(14)
+        assert mock_tado_api.cloud_api.purge_history_days == 14
+
+    def test_get_purge_history_info_passes_configured_purge_days(self, purgehistory_info_setup):
+        client, mock_tado_api, mock_state_manager = purgehistory_info_setup
+        mock_tado_api.cloud_api.purge_history_days = 30
+        mock_state_manager.get_device_history_status_info.return_value = {
+            "total_records": 10,
+            "oldest_record": "2026-02-01T00:00:00",
+            "database_size": 54321,
+            "purge_history_days": 30,
+        }
+
+        response = client.get("/purgehistory/info")
+
+        assert response.status_code == 200
+        assert response.json()["purge_history_days"] == 30
+        mock_state_manager.get_device_history_status_info.assert_called_once_with(30)
+
+    def test_get_purge_history_info_db_returns_correct_structure(self, purgehistory_info_db_setup):
+        """Test GET /purgehistory/info returns correct structure using real database."""
+        client, mock_tado_api, state_manager = purgehistory_info_db_setup
+
+        conn = sqlite3.connect(state_manager.db_path)
+        expected_count = conn.execute("SELECT COUNT(*) FROM device_state_history").fetchone()[0]
+        conn.close()
+
+        response = client.get("/purgehistory/info")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "history_record_count" in data
+        assert "oldest_record" in data
+        assert "database_file_size_bytes" in data
+        assert "database_file_size_mb" in data
+        assert "history_purge_setting" in data
+
+        assert isinstance(data["history_record_count"], int)
+        assert data["history_record_count"]  == expected_count
+        assert isinstance(data["database_file_size_bytes"], int)
+        assert data["database_file_size_bytes"] > 0
+        assert data["history_purge_setting"] == "14 days"
+
+
+    def test_get_purge_history_info_db_oldest_record_is_valid_datetime(self, purgehistory_info_db_setup):
+        """Test that oldest_record is a valid datetime string."""
+        from datetime import datetime
+        client, mock_tado_api, state_manager = purgehistory_info_db_setup
+
+        response = client.get("/purgehistory/info")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        oldest = data["oldest_record"]
+        assert oldest is not None
+        # Should be parseable as datetime
+        parsed = datetime.fromisoformat(oldest)
+        assert parsed is not None
+
+    def test_get_purge_history_info_db_passes_configured_purge_days(self, purgehistory_info_db_setup):
+        """Test that purge_history_days in response reflects the configured value."""
+        client, mock_tado_api, state_manager = purgehistory_info_db_setup
+        mock_tado_api.cloud_api.purge_history_days = 30
+
+        response = client.get("/purgehistory/info")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["history_purge_setting"] == "30 days"
+
+    def test_get_purge_history_info_db_passes_never_purge_days(self, purgehistory_info_db_setup):
+        """Test that purge_history_days in response reflects the configured value."""
+        client, mock_tado_api, state_manager = purgehistory_info_db_setup
+        mock_tado_api.cloud_api.purge_history_days = None
+
+        response = client.get("/purgehistory/info")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["history_purge_setting"] == "never"
+
+
+class TestPurgeHistoryNow:
+    """Test suite for POST /purgehistory/now endpoint."""
+
+    @pytest.fixture
+    def purgehistory_now_setup(self, test_db):
+        from tado_local.routes import create_app, register_routes
+        from tado_local.state import DeviceStateManager
+
+        state_manager = DeviceStateManager(test_db)
+
+        mock_tado_api = SimpleNamespace(
+            state_manager=state_manager,
+            cloud_api=SimpleNamespace(purge_history_days=14),
+            pairing=None,
+        )
+
+        app = create_app()
+        register_routes(app, lambda: mock_tado_api)
+
+        client = TestClient(app)
+        return client, mock_tado_api, state_manager
+
+    def test_post_purge_history_now_purge_120_days(self, purgehistory_now_setup):
+        client, mock_tado_api, state_manager = purgehistory_now_setup
+
+        response = client.post("/purgehistory/now?days=120")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["days"] == 120
+        assert "deleted_rows" in data
+        assert "remaining_rows" in data
+        assert "cutoff" in data
+        assert "-120 days" in data["cutoff"]
+
+    def test_post_purge_history_now_uses_configured_days_when_no_param(self, purgehistory_now_setup):
+        client, mock_tado_api, state_manager = purgehistory_now_setup
+
+        response = client.post("/purgehistory/now")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["days"] == 14  # uses purge_history_days from cloud_api config
+
+    def test_post_purge_history_now_deletes_old_records(self, purgehistory_now_setup):
+        client, mock_tado_api, state_manager = purgehistory_now_setup
+
+        # Insert an old record that should be purged (updated_at far in the past)
+        conn = sqlite3.connect(state_manager.db_path)
+        conn.execute(
+            "INSERT INTO device_state_history (device_id, timestamp_bucket, current_temperature, updated_at) "
+            "VALUES (1, '20200101000000', 20.0, '2020-01-01 00:00:00')"
+        )
+        total_before = conn.execute("SELECT COUNT(*) FROM device_state_history").fetchone()[0]
+        conn.commit()
+        conn.close()
+
+        response = client.post("/purgehistory/now?days=8")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["deleted_rows"] >= 1
+        assert data["remaining_rows"] == total_before - data["deleted_rows"]
+
+    def test_post_purge_history_now_deletes_based_on_commandline(self, purgehistory_now_setup):
+        client, mock_tado_api, state_manager = purgehistory_now_setup
+
+        # Insert an old record that should be purged (updated_at far in the past)
+        conn = sqlite3.connect(state_manager.db_path)
+        conn.execute(
+            "INSERT INTO device_state_history (device_id, timestamp_bucket, current_temperature, updated_at) "
+            "VALUES (1, '20200101000000', 20.0, '2020-01-01 00:00:00')"
+        )
+        total_before = conn.execute("SELECT COUNT(*) FROM device_state_history").fetchone()[0]
+        conn.commit()
+        conn.close()
+
+        response = client.post("/purgehistory/now")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["deleted_rows"] >= 1
+        assert data["remaining_rows"] == total_before - data["deleted_rows"]
+
+    def test_post_purge_history_now_minimal_days_seven(self, purgehistory_now_setup):
+        client, mock_tado_api, state_manager = purgehistory_now_setup
+        response = client.post("/purgehistory/now?days=1")
+
+        assert response.status_code == 400
+        data = response.json()
+        assert data["detail"] == "Days must be greater than or equal to 7"
+
+    def test_post_purge_history_now_uses_deafauly_days_when_no_param(self, purgehistory_now_setup):
+        client, mock_tado_api, state_manager = purgehistory_now_setup
+        mock_tado_api.cloud_api.purge_history_days = None
+
+        response = client.post("/purgehistory/now")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert data["days"] == 365  # uses purge_history_days default of 365 when not set in config
