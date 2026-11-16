@@ -48,7 +48,7 @@ docker_cmd() {
 
 TOKEN="${GITHUB_TOKEN:-}"
 if [ -z "$TOKEN" ] && [ -n "${GITHUB_TOKEN_FILE:-}" ] && [ -f "$GITHUB_TOKEN_FILE" ]; then
-    TOKEN="$(cat "$GITHUB_TOKEN_FILE")"
+    TOKEN="$(tr -d '\r\n' < "$GITHUB_TOKEN_FILE")"
 fi
 
 mkdir -p "$WORK_DIR"
