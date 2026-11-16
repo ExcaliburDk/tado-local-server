@@ -52,13 +52,16 @@ if [ -z "$TOKEN" ] && [ -n "${GITHUB_TOKEN_FILE:-}" ] && [ -f "$GITHUB_TOKEN_FIL
 fi
 
 mkdir -p "$WORK_DIR"
-ZIP_URL="https://github.com/$REPO_OWNER/$REPO_NAME/archive/refs/heads/$BRANCH.zip"
+ZIP_URL="https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/zipball/$BRANCH"
 
 echo "Downloading $REPO_OWNER/$REPO_NAME ($BRANCH)..."
 if [ -n "$TOKEN" ]; then
-    curl -fsSL \
+    # GitHub API redirects archive downloads to codeload.github.com. Keep the
+    # authorization header across that trusted GitHub redirect.
+    curl -fsSL --location-trusted \
         -H "Authorization: Bearer $TOKEN" \
         -H "Accept: application/vnd.github+json" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
         "$ZIP_URL" -o "$ZIP_FILE" \
         || fail "Could not download the private GitHub repository"
 else
