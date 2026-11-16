@@ -945,6 +945,139 @@
             .zone-temp { font-size: 39px; }
             .modal-content { padding: 20px; width: calc(100% - 24px); }
         }
+
+        /* Zone control dialog */
+        .modal-content {
+            max-width: 520px;
+            padding: 28px;
+            border-radius: 24px;
+            background:
+                linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, var(--bg-modal)) 0, var(--bg-modal) 180px);
+        }
+
+        .modal-header {
+            margin-bottom: 22px;
+            padding-bottom: 4px;
+        }
+
+        .modal-title {
+            font-size: 29px;
+            font-weight: 700;
+            letter-spacing: -0.035em;
+            margin-bottom: 8px;
+        }
+
+        .modal-temp {
+            font-size: clamp(54px, 11vw, 72px);
+            line-height: .95;
+            font-weight: 300;
+            letter-spacing: -0.06em;
+            color: var(--accent);
+        }
+
+        .tabs {
+            margin: 0 0 24px;
+            border-radius: 14px;
+        }
+
+        .tab-button {
+            min-height: 44px;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .control-group {
+            margin-bottom: 16px;
+            padding: 15px;
+            border: 1px solid var(--border-light);
+            border-radius: 15px;
+            background: color-mix(in srgb, var(--bg-primary) 72%, transparent);
+        }
+
+        .control-label {
+            margin-bottom: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .01em;
+            color: var(--text-secondary);
+        }
+
+        .temp-control {
+            gap: 22px;
+            margin: 4px 0 0;
+        }
+
+        .temp-button {
+            width: 52px;
+            height: 52px;
+            border-width: 2px;
+            box-shadow: 0 4px 12px rgba(24, 39, 75, .08);
+        }
+
+        .temp-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(255, 123, 46, .22);
+        }
+
+        .temp-display {
+            min-width: 128px;
+            font-size: 52px;
+            font-weight: 300;
+            letter-spacing: -0.05em;
+        }
+
+        .mode-buttons {
+            gap: 10px;
+        }
+
+        .mode-button {
+            min-height: 50px;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-modal);
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(24, 39, 75, .04);
+        }
+
+        .mode-button:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .mode-button.active {
+            border: 2px solid var(--accent);
+            background: var(--bg-accent-subtle);
+            color: var(--accent);
+            box-shadow: 0 5px 14px rgba(255, 123, 46, .13);
+        }
+
+        #schedule-on,
+        #schedule-off {
+            font-size: 14px;
+        }
+
+        .action-buttons {
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .action-buttons .btn {
+            min-height: 50px;
+            font-size: 15px;
+        }
+
+        .action-buttons .btn-secondary {
+            border: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 480px) {
+            .modal-content { padding: 20px 16px; border-radius: 20px; }
+            .control-group { padding: 12px; }
+            .temp-control { gap: 12px; }
+            .temp-button { width: 48px; height: 48px; }
+            .temp-display { min-width: 112px; font-size: 46px; }
+        }
     </style>
     <svg aria-hidden="true" style="display:none;" id="svgdefs" version="2" xmlns="http://www.w3.org/2000/svg">
         <defs>
