@@ -76,7 +76,17 @@ SOURCE_DIR="$(find "$WORK_DIR/unpacked" -mindepth 1 -maxdepth 2 -type f -name Do
 echo "Updating existing project folder: $PROJECT_DIR"
 # Copy the archive contents into the current folder, without creating a nested
 # project directory. The .git folder and QNAP data volume stay untouched.
+# Move this updater out of the destination while copying. Otherwise cp can
+# overwrite the running shell script and cause an unexpected EOF.
+UPDATER_BACKUP="$WORK_DIR/qnap-update.sh"
+if [ -f "$PROJECT_DIR/qnap-update.sh" ]; then
+    mv "$PROJECT_DIR/qnap-update.sh" "$UPDATER_BACKUP"
+fi
 cp -a "$SOURCE_DIR"/. "$PROJECT_DIR"/
+if [ -f "$UPDATER_BACKUP" ]; then
+    mv "$UPDATER_BACKUP" "$PROJECT_DIR/qnap-update.sh"
+    chmod +x "$PROJECT_DIR/qnap-update.sh"
+fi
 
 grep -q "Modern interface refinements" "$PROJECT_DIR/tado_local/static/index.html" \
     || fail "The downloaded source does not contain the expected latest web UI"
