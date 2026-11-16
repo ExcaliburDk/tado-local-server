@@ -14,7 +14,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ['3.11', '3.14']
+        # The package currently supports Python 3.11 (see pyproject.toml).
+        # Keep CI aligned with the declared support range.
+        python-version: ['3.11']
 
     steps:
     - name: Checkout code

@@ -2426,7 +2426,7 @@ class TestBaseAPIHandling:
         monkeypatch.setattr(sync_module, "TadoCloudSync", FakeSync)
         mock_api.cloud_api = FakeCloudApi()
 
-        response = client.post("/refresh/cloud")
+        response = client.post("/refresh/cloud?battery_only=false")
 
         assert response.status_code == 200
         data = response.json()
