@@ -946,98 +946,190 @@
             .modal-content { padding: 20px; width: calc(100% - 24px); }
         }
 
-        /* Zone control dialog */
+        /* Zone control dialog - Streamlined compact layout */
         .modal-content {
-            max-width: 520px;
-            padding: 28px;
-            border-radius: 24px;
-            background:
-                linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, var(--bg-modal)) 0, var(--bg-modal) 180px);
+            max-width: 680px;
+            width: 95%;
+            padding: 16px 20px;
+            border-radius: 20px;
+            max-height: 94vh;
+            background: var(--bg-modal);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
         }
 
         .modal-header {
-            margin-bottom: 22px;
-            padding-bottom: 4px;
+            margin-bottom: 10px;
+            padding-bottom: 0;
+        }
+
+        .modal-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         .modal-title {
-            font-size: 29px;
+            font-size: 20px;
             font-weight: 700;
-            letter-spacing: -0.035em;
-            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+            margin: 0;
+            color: var(--text-primary);
         }
 
-        .modal-temp {
-            font-size: clamp(54px, 11vw, 72px);
-            line-height: .95;
-            font-weight: 300;
-            letter-spacing: -0.06em;
+        .modal-current-badge {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: color-mix(in srgb, var(--accent) 12%, var(--bg-primary));
+            padding: 2px 8px;
+            border-radius: 6px;
+            border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+            white-space: nowrap;
+        }
+
+        .modal-current-badge strong {
             color: var(--accent);
+            font-weight: 700;
+        }
+
+        .modal-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-close-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid var(--border-light);
+            background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+
+        .modal-close-btn:hover {
+            background: var(--bg-accent-subtle);
+            color: var(--accent);
+            border-color: var(--accent);
         }
 
         .tabs {
-            margin: 0 0 24px;
-            border-radius: 14px;
+            margin: 0 0 10px 0;
+            padding: 3px;
+            border-radius: 10px;
+            background: var(--bg-primary);
         }
 
         .tab-button {
-            min-height: 44px;
-            font-size: 15px;
+            min-height: 32px;
+            padding: 4px 14px;
+            font-size: 13px;
             font-weight: 600;
+            border-radius: 7px;
+        }
+
+        .modal-grid-2col {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .modal-col-left,
+        .modal-col-right {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .control-group {
-            margin-bottom: 16px;
-            padding: 15px;
+            margin-bottom: 0;
+            padding: 8px 12px;
             border: 1px solid var(--border-light);
-            border-radius: 15px;
-            background: color-mix(in srgb, var(--bg-primary) 72%, transparent);
+            border-radius: 12px;
+            background: color-mix(in srgb, var(--bg-primary) 60%, transparent);
         }
 
         .control-label {
-            margin-bottom: 12px;
-            font-size: 13px;
+            margin-bottom: 6px;
+            font-size: 11px;
             font-weight: 700;
-            letter-spacing: .01em;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
             color: var(--text-secondary);
         }
 
         .temp-control {
-            gap: 22px;
-            margin: 4px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin: 0;
         }
 
         .temp-button {
-            width: 52px;
-            height: 52px;
-            border-width: 2px;
-            box-shadow: 0 4px 12px rgba(24, 39, 75, .08);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            background: var(--bg-modal);
+            color: var(--accent);
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .temp-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 18px rgba(255, 123, 46, .22);
+            background: var(--accent);
+            color: #fff;
+            transform: scale(1.06);
         }
 
         .temp-display {
-            min-width: 128px;
-            font-size: 52px;
+            min-width: 80px;
+            font-size: 32px;
             font-weight: 300;
-            letter-spacing: -0.05em;
+            letter-spacing: -0.04em;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
         }
 
         .mode-buttons {
-            gap: 10px;
+            display: flex;
+            gap: 6px;
         }
 
         .mode-button {
-            min-height: 50px;
-            padding: 12px 14px;
+            min-height: 34px;
+            padding: 5px 10px;
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 8px;
             background: var(--bg-modal);
+            font-size: 12.5px;
             font-weight: 600;
-            box-shadow: 0 2px 6px rgba(24, 39, 75, .04);
+            flex: 1;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
         }
 
         .mode-button:hover {
@@ -1049,34 +1141,92 @@
             border: 2px solid var(--accent);
             background: var(--bg-accent-subtle);
             color: var(--accent);
-            box-shadow: 0 5px 14px rgba(255, 123, 46, .13);
+            box-shadow: 0 2px 8px rgba(255, 123, 46, 0.15);
         }
 
         #schedule-on,
         #schedule-off {
-            font-size: 14px;
+            min-height: 30px;
+            font-size: 11.5px;
+            padding: 4px 8px;
+        }
+
+        .modal-devices-box {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            margin-top: 0;
+            padding: 10px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            background: color-mix(in srgb, var(--bg-primary) 60%, transparent);
+        }
+
+        .modal-devices-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        #modal-devices-list {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 210px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .device-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: var(--bg-modal);
+            border: 1px solid var(--border-light);
+        }
+
+        .device-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .device-sub {
+            font-size: 10.5px;
+            color: var(--text-muted);
         }
 
         .action-buttons {
-            gap: 12px;
-            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: flex-end;
         }
 
         .action-buttons .btn {
-            min-height: 50px;
-            font-size: 15px;
+            min-height: 38px;
+            padding: 6px 20px;
+            font-size: 13.5px;
+            font-weight: 600;
+            border-radius: 10px;
         }
 
         .action-buttons .btn-secondary {
             border: 1px solid var(--border-color);
         }
 
-        @media (max-width: 480px) {
-            .modal-content { padding: 20px 16px; border-radius: 20px; }
-            .control-group { padding: 12px; }
-            .temp-control { gap: 12px; }
-            .temp-button { width: 48px; height: 48px; }
-            .temp-display { min-width: 112px; font-size: 46px; }
+        @media (max-width: 600px) {
+            .modal-content { padding: 14px 14px; border-radius: 16px; }
+            .modal-grid-2col { grid-template-columns: 1fr; gap: 8px; }
+            .control-group { padding: 8px 10px; }
+            .temp-button { width: 34px; height: 34px; }
+            .temp-display { min-width: 70px; font-size: 28px; }
+            #modal-devices-list { max-height: 140px; }
         }
 
         /* Modern Zone Card Layout & Device List */
@@ -1505,16 +1655,19 @@
     <div class="modal" id="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
+                <div class="modal-header-top">
+                    <div class="modal-title-wrap">
                         <h2 class="modal-title" id="modal-zone-name">Zone</h2>
-                        <div class="modal-temp" id="modal-current-temp">--°</div>
+                        <span class="modal-current-badge">Currently <strong id="modal-current-temp">--°</strong></span>
+                        <span id="modal-battery-warning" class="pill-badge pill-badge-battery" style="display: none;">🪫 Low battery</span>
                     </div>
-                    <button class="btn btn-secondary btn-sm" id="modal-blink-zone" style="min-height: 38px; padding: 6px 12px; font-size: 13px;" title="Blink display on all thermostats in this room">
-                        ✨ Blink Zone
-                    </button>
+                    <div class="modal-header-actions">
+                        <button class="btn-card-blink" id="modal-blink-zone" title="Blink display on all thermostats in this room">
+                            ✨ Blink Zone
+                        </button>
+                        <button class="modal-close-btn" onclick="closeModal()" title="Close dialog">✕</button>
+                    </div>
                 </div>
-                <div id="modal-battery-warning" class="pill-badge pill-badge-battery" style="display: none; margin-top: 8px;">🪫 Low battery detected in room</div>
             </div>
 
             <!-- Tabs -->
@@ -1525,36 +1678,42 @@
 
             <!-- Controls Tab -->
             <div class="tab-content" id="tab-controls">
-                <div class="control-group">
-                    <label class="control-label">Target Temperature</label>
-                    <div class="temp-control">
-                        <button class="temp-button" id="temp-down">−</button>
-                        <div class="temp-display" id="temp-display">20°</div>
-                        <button class="temp-button" id="temp-up">+</button>
-                    </div>
-                </div>
+                <div class="modal-grid-2col">
+                    <div class="modal-col-left">
+                        <div class="control-group">
+                            <label class="control-label">Target Temperature</label>
+                            <div class="temp-control">
+                                <button class="temp-button" id="temp-down">−</button>
+                                <div class="temp-display" id="temp-display">20°</div>
+                                <button class="temp-button" id="temp-up">+</button>
+                            </div>
+                        </div>
 
-                <div class="control-group">
-                    <label class="control-label">Tado Smart Schedule (WRN: 1 API call)</label>
-                    <div class="mode-buttons">
-                        <button class="mode-button" id="schedule-on" data-mode="off">Resume</button>
-                        <button class="mode-button" id="schedule-off" data-mode="heat">Off</button>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <label class="control-label">Mode</label>
-                    <div class="mode-buttons">
-                        <button class="mode-button" id="mode-heat" data-mode="heat">Heat</button>
-                        <button class="mode-button" id="mode-cool" data-mode="cool">Cool</button>
-                        <button class="mode-button" id="mode-off" data-mode="off">Off</button>
-                    </div>
-                </div>
+                        <div class="control-group">
+                            <label class="control-label">Mode</label>
+                            <div class="mode-buttons">
+                                <button class="mode-button" id="mode-heat" data-mode="heat">Heat</button>
+                                <button class="mode-button" id="mode-cool" data-mode="cool">Cool</button>
+                                <button class="mode-button" id="mode-off" data-mode="off">Off</button>
+                            </div>
+                        </div>
 
-                <!-- Thermostats in this room -->
-                <div class="modal-devices-box" id="modal-devices-box">
-                    <div class="modal-devices-title">Thermostats in Room</div>
-                    <div id="modal-devices-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+                        <div class="control-group">
+                            <label class="control-label">Tado Smart Schedule (WRN: 1 API call)</label>
+                            <div class="mode-buttons">
+                                <button class="mode-button" id="schedule-on" data-mode="off">Resume</button>
+                                <button class="mode-button" id="schedule-off" data-mode="heat">Off</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-col-right">
+                        <!-- Thermostats in this room -->
+                        <div class="modal-devices-box" id="modal-devices-box">
+                            <div class="modal-devices-title">Thermostats in Room</div>
+                            <div id="modal-devices-list"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="action-buttons">
