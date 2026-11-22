@@ -1066,3 +1066,71 @@ class TadoLocalAPI:
         logger.debug(f"Sending to HomeKit: {characteristics_to_set}")
         await target_pairing.put_characteristics(characteristics_to_set)
         return True
+
+    async def identify_device(self, device_id: int) -> bool:
+        """
+        Trigger the physical identify / display routine for a HomeKit device.
+        For Tado radiator thermostats, this flashes/blinks the LED matrix display.
+        """
+        if not self.pairing:
+            raise ValueError("Bridge not connected")
+
+        device_info = self.state_manager.get_device_info(device_id)
+        if not device_info:
+            raise ValueError(f"Device {device_id} not found")
+
+        aid = device_info.get('aid')
+        if not aid:
+            self.state_manager._load_device_cache()
+            device_info = self.state_manager.get_device_info(device_id)
+            aid = device_info.get('aid') if device_info else None
+            if not aid:
+                raise ValueError(f"Device {device_id} has no HomeKit accessory ID (aid)")
+
+        identify_char_uuid = DeviceStateManager.CHAR_IDENTIFY.lower()
+        identify_iid = None
+
+        # Look in accessories_cache for the identify characteristic
+        for acc in self.accessories_cache:
+            if acc.get('aid') == aid:
+                for service in acc.get('services', []):
+                    for char in service.get('characteristics', []):
+                        if char.get('type', '').lower() == identify_char_uuid:
+                            identify_iid = char.get('iid')
+                            break
+                    if identify_iid:
+                        break
+                if identify_iid:
+                    break
+
+        if not identify_iid:
+            identify_iid = 7
+
+        target_pairing = self.aid_to_pairing.get(aid, self.pairing)
+        logger.info(f"Triggering identify on device {device_id} (aid={aid}, iid={identify_iid})")
+        await target_pairing.put_characteristics([(aid, identify_iid, True)])
+        return True
+
+    async def identify_zone(self, zone_id: int) -> Dict[str, Any]:
+        """Trigger identify on all devices in a zone."""
+        devices = self.state_manager.get_all_devices()
+        zone_devices = [d for d in devices if d.get('zone_id') == zone_id]
+        if not zone_devices:
+            zone = self.state_manager.zone_cache.get(zone_id)
+            if zone and zone.get('leader_device_id'):
+                dev = self.state_manager.get_device_info(zone['leader_device_id'])
+                if dev:
+                    zone_devices = [dev]
+
+        results = {}
+        for dev in zone_devices:
+            dev_id = dev.get('device_id')
+            if not dev_id:
+                continue
+            try:
+                await self.identify_device(dev_id)
+                results[dev_id] = True
+            except Exception as e:
+                logger.warning(f"Failed to identify device {dev_id}: {e}")
+                results[dev_id] = False
+        return results

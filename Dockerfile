@@ -14,4 +14,7 @@ USER tado
 VOLUME /data
 EXPOSE 4407
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:4407/api').read()" || exit 1
+
 ENTRYPOINT ["/app/entrypoint.sh"]

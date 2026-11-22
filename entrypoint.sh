@@ -27,4 +27,15 @@ if [ -n "$TADO_ACCESSORY_IP" ]; then
     unset IFS
 fi
 
+# Auto-purge old device history (defaults to 30 days)
+PURGE_DAYS="${TADO_PURGE_DAYS:-${PURGE_DAYS:-30}}"
+if [ -n "$PURGE_DAYS" ]; then
+    ARGS="$ARGS --purgehistory $PURGE_DAYS"
+fi
+
+# Export external port for mDNS if mapped to host port
+if [ -n "$EXTERNAL_PORT" ] && [ -z "$TADO_EXTERNAL_PORT" ]; then
+    export TADO_EXTERNAL_PORT="$EXTERNAL_PORT"
+fi
+
 exec tado-local $ARGS

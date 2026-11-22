@@ -1379,6 +1379,19 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
 
         return {'zone_id': zone_id, 'updated': True}
 
+    @app.post("/zones/{zone_id}/identify", tags=["Zones"])
+    async def identify_zone(zone_id: int, api_key: Optional[str] = Depends(get_api_key)):
+        """Trigger physical identify (blink display) for all devices in a zone."""
+        tado_api = get_tado_api()
+        if not tado_api:
+            raise HTTPException(status_code=503, detail="API not initialized")
+        try:
+            results = await tado_api.identify_zone(zone_id)
+            return {"status": "ok", "zone_id": zone_id, "devices": results}
+        except Exception as e:
+            logger.error(f"Error identifying zone {zone_id}: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
     @app.get("/devices", tags=["Devices"])
     async def get_devices(api_key: Optional[str] = Depends(get_api_key)):
         """
@@ -1615,6 +1628,26 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
         tado_api.state_manager._load_device_cache()
 
         return {'device_id': device_id, 'zone_id': zone_id, 'updated': True}
+
+    @app.post("/devices/{device_id}/identify", tags=["Devices"])
+    async def identify_device(device_id: int, api_key: Optional[str] = Depends(get_api_key)):
+        """Trigger physical identify (blink display) for a specific device."""
+        tado_api = get_tado_api()
+        if not tado_api:
+            raise HTTPException(status_code=503, detail="API not initialized")
+        try:
+            success = await tado_api.identify_device(device_id)
+            return {"status": "ok", "device_id": device_id, "identified": success}
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            logger.error(f"Error identifying device {device_id}: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/thermostats/{thermostat_id}/identify", tags=["Thermostats"])
+    async def identify_thermostat(thermostat_id: int, api_key: Optional[str] = Depends(get_api_key)):
+        """Trigger physical identify (blink display) for a specific thermostat (alias for device)."""
+        return await identify_device(thermostat_id, api_key)
 
     @app.get("/thermostats/{thermostat_id}/history", tags=["Thermostats"])
     async def get_thermostat_history(

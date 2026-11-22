@@ -1078,6 +1078,225 @@
             .temp-button { width: 48px; height: 48px; }
             .temp-display { min-width: 112px; font-size: 46px; }
         }
+
+        /* Modern Zone Card Layout & Device List */
+        .zone-card {
+            border-radius: 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 180px;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            position: relative;
+            box-shadow: var(--surface-shadow);
+        }
+
+        .zone-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--surface-shadow-hover);
+            border-color: color-mix(in srgb, var(--accent) 45%, var(--border-color));
+        }
+
+        .zone-card.heating-active {
+            background: linear-gradient(150deg, color-mix(in srgb, var(--accent) 10%, var(--bg-card)), var(--bg-card));
+            border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+            box-shadow: 0 6px 20px -4px rgba(255, 123, 46, 0.22);
+        }
+
+        .zone-card.cooling-active {
+            background: linear-gradient(150deg, color-mix(in srgb, #0ea5e9 10%, var(--bg-card)), var(--bg-card));
+            border-color: rgba(14, 165, 233, 0.4);
+            box-shadow: 0 6px 20px -4px rgba(14, 165, 233, 0.22);
+        }
+
+        .zone-card.off {
+            opacity: 0.72;
+            background: var(--bg-card);
+            border-color: var(--border-light);
+        }
+
+        .zone-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .zone-title {
+            font-size: 15.5px;
+            font-weight: 650;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            line-height: 1.25;
+        }
+
+        .zone-card-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-card-blink {
+            background: color-mix(in srgb, var(--text-primary) 7%, transparent);
+            border: 1px solid var(--border-light);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            line-height: 1.1;
+        }
+
+        .btn-card-blink:hover {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .btn-card-blink.blinking {
+            background: var(--accent);
+            color: #fff;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .zone-temp {
+            font-size: 46px;
+            font-weight: 300;
+            letter-spacing: -0.04em;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            margin: 4px 0 10px 0;
+            color: var(--text-primary);
+        }
+
+        .zone-temp-decimal {
+            font-size: 30px;
+            font-weight: 300;
+            opacity: 0.85;
+        }
+
+        .zone-temp-unit {
+            font-size: 24px;
+            vertical-align: super;
+            font-weight: 300;
+            opacity: 0.7;
+        }
+
+        .zone-pills-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            font-size: 11.5px;
+            font-weight: 600;
+            line-height: 1.25;
+            background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-light);
+            white-space: nowrap;
+        }
+
+        .pill-badge-heating {
+            background: color-mix(in srgb, var(--accent) 15%, transparent);
+            color: var(--accent);
+            border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+        }
+
+        .pill-badge-cooling {
+            background: rgba(14, 165, 233, 0.12);
+            color: #0284c7;
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+
+        .pill-badge-battery {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.35);
+            font-weight: 700;
+        }
+
+        .pill-badge-window {
+            background: rgba(59, 130, 246, 0.12);
+            color: #2563eb;
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        /* Modal devices list */
+        .modal-devices-box {
+            margin-top: 16px;
+            padding: 14px;
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            background: color-mix(in srgb, var(--bg-primary) 50%, transparent);
+        }
+
+        .modal-devices-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .device-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            border-radius: 10px;
+            background: var(--bg-modal);
+            border: 1px solid var(--border-light);
+        }
+
+        .device-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .device-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .device-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .device-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
     </style>
     <svg aria-hidden="true" style="display:none;" id="svgdefs" version="2" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -1286,9 +1505,16 @@
     <div class="modal" id="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title" id="modal-zone-name">Zone</h2>
-                <div class="modal-temp" id="modal-current-temp">--°</div>
-                <div id="modal-battery-warning" class="battery-low" style="display: none;">⚠️ Low battery</div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h2 class="modal-title" id="modal-zone-name">Zone</h2>
+                        <div class="modal-temp" id="modal-current-temp">--°</div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="modal-blink-zone" style="min-height: 38px; padding: 6px 12px; font-size: 13px;" title="Blink display on all thermostats in this room">
+                        ✨ Blink Zone
+                    </button>
+                </div>
+                <div id="modal-battery-warning" class="pill-badge pill-badge-battery" style="display: none; margin-top: 8px;">🪫 Low battery detected in room</div>
             </div>
 
             <!-- Tabs -->
@@ -1323,6 +1549,12 @@
                         <button class="mode-button" id="mode-cool" data-mode="cool">Cool</button>
                         <button class="mode-button" id="mode-off" data-mode="off">Off</button>
                     </div>
+                </div>
+
+                <!-- Thermostats in this room -->
+                <div class="modal-devices-box" id="modal-devices-box">
+                    <div class="modal-devices-title">Thermostats in Room</div>
+                    <div id="modal-devices-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
                 </div>
 
                 <div class="action-buttons">
@@ -1385,6 +1617,7 @@
         checkSetup();
 
     let zones = [];
+    let allDevices = [];
     let currentZone = null;
     let tempValue = 20;
     let modeValue = 'heat';
@@ -1701,11 +1934,21 @@
         // Load zones
         async function loadZones() {
             try {
-                const response = await fetch('/zones');
-                if (!response.ok) throw new Error('Failed to load zones');
+                const [zonesRes, devRes] = await Promise.all([
+                    fetch('/zones'),
+                    fetch('/devices').catch(() => null)
+                ]);
+                if (!zonesRes.ok) throw new Error('Failed to load zones');
                 
-                const data = await response.json();
-                zones = data.zones;
+                const data = await zonesRes.json();
+                zones = data.zones || [];
+
+                if (devRes && devRes.ok) {
+                    try {
+                        const devData = await devRes.json();
+                        allDevices = devData.devices || [];
+                    } catch (e) {}
+                }
                 
                 // Update home name and page title if available (use first home)
                 if (data.homes && data.homes.length > 0 && data.homes[0].name) {
@@ -1882,7 +2125,7 @@
 
                 let windowStatus = "hide";
                 if (state.window_open !== null && state.window_open !== undefined) {
-                    windowStatus = state.window_open ?  "open" : "closed";
+                    windowStatus = state.window_open ? "open" : "closed";
                 }
                 
                 // Format temperature with one decimal, split for styling
@@ -1894,80 +2137,60 @@
                 }
                 
                 let cardClass = 'zone-card';
-                let statusText = '';
+                let statusBadge = '';
                 
                 if (mode === 0) {
-                    // Off / Frost protection
                     cardClass += ' off';
-                    statusText = 'Off';
-                } else {
-                    // Mode is on (heating enabled)
-                    // Color by actual current temperature regardless of heating status
-                    if (temp !== null && temp !== undefined && temp < 17) {
-                        cardClass += (mode === 2 ? ' cooling-freeze' : ' heating-cold');
-                    } else if (temp !== null && temp !== undefined && temp <= 22) {
-                        cardClass += (mode === 2 ? ' cooling-medium' : ' heating-medium');
-                    } else if (temp !== null && temp !== undefined) {
-                        cardClass += (mode === 2 ? ' cooling-medium' : ' heating-hot');
-                    } else {
-                        // No temperature data, default to medium
-                        cardClass += (mode === 2 ? ' cooling-medium' : ' heating-medium');
-                    }
-                    
-                    // Status text depends on whether actively heating/cooling
-                    if (curHeating === 1) {
-                        statusText = `Heating to ${target}°`;
-                    } else if (curHeating === 2) {
-                        statusText = `Cooling to ${target}°`;
-                    } else {
-                        statusText = `Target ${target}°`;
-                    }
-                }
-
-                // Show icon based on cur_heating state
-                // 0 = off (no icon), 1 = heating (flame), 2 = cooling (frost/snowflake)
-                let activityIcon = '';
-                                
-                // Show icon based on window open status if enabled
-                if (windowStatus != "hide") {
-                    let showWindowOpenStatus = windowStatus != "hide" &&
-                        ((showWindowStatus == "show") || (showWindowStatus == "open-only" && windowStatus == "open"));
-                    activityIcon += '<div class="window-icon"' 
-                    activityIcon += (showWindowOpenStatus ? "" : ' style="display: none;"');
-                    activityIcon += '><svg width="40" height="36" version="2.0"><use href="#window-' + (windowStatus == "open" ? "open" : "closed") 
-                    activityIcon += '" /></svg></div>';
-                }
-
-                if (curHeating === 1) {
-                    activityIcon += '<div class="flame-icon">🔥</div>';
+                    statusBadge = '<span class="pill-badge">Off</span>';
+                } else if (curHeating === 1) {
+                    cardClass += ' heating-active';
+                    statusBadge = `<span class="pill-badge pill-badge-heating">🔥 Heating to ${target}°</span>`;
                 } else if (curHeating === 2) {
-                    activityIcon += '<div class="flame-icon">❄️</div>';
+                    cardClass += ' cooling-active';
+                    statusBadge = `<span class="pill-badge pill-badge-cooling">❄️ Cooling to ${target}°</span>`;
+                } else {
+                    statusBadge = `<span class="pill-badge">Target ${target}°</span>`;
                 }
-                
-                // Format humidity if available
-                const humidityHtml = (humidity !== null && humidity !== undefined) 
-                    ? `<div class="zone-humidity">Humidity ${humidity}%</div>` 
+
+                let windowBadge = '';
+                if (windowStatus !== "hide") {
+                    let showWindowOpenStatus = (showWindowStatus === "show") || (showWindowStatus === "open-only" && windowStatus === "open");
+                    if (showWindowOpenStatus) {
+                        windowBadge = `<span class="pill-badge pill-badge-window">🪟 ${windowStatus === 'open' ? 'Open' : 'Closed'}</span>`;
+                    }
+                }
+
+                const humidityBadge = (humidity !== null && humidity !== undefined) 
+                    ? `<span class="pill-badge">💧 ${humidity}%</span>` 
                     : '';
 
-                // Calculate dew point and comfort level
                 const dewPoint = calculateDewPoint(temp, humidity);
                 const comfort = getComfortLevel(temp, humidity, dewPoint);
-                const comfortHtml = (dewPoint !== null) 
-                    ? `<div class="zone-comfort">${comfort.icon} ${comfort.label}</div>` 
+                const comfortBadge = (dewPoint !== null) 
+                    ? `<span class="pill-badge">${comfort.icon} ${comfort.label}</span>` 
+                    : '';
+
+                const batteryBadge = batteryLow 
+                    ? `<span class="pill-badge pill-badge-battery">🪫 Low battery</span>` 
                     : '';
 
                 return `
                     <div class="${cardClass}" data-zone-id="${zone.zone_id}" onclick="openZoneModal(${zone.zone_id})">
-                        <div class="zone-activity-icons">
-                        ${activityIcon}
+                        <div class="zone-card-header">
+                            <div class="zone-title">${zone.name}</div>
+                            <div class="zone-card-actions">
+                                <button class="btn-card-blink" onclick="event.stopPropagation(); identifyZone(${zone.zone_id}, this)" title="Blink thermostat display in this room">✨ Blink</button>
+                            </div>
                         </div>
-                        <div>
+                        <div class="zone-card-body">
                             <div class="zone-temp">${tempHtml}<span class="zone-temp-unit">°</span></div>
-                            <div class="zone-name">${zone.name}</div>
-                            <div class="zone-status">${statusText}</div>
-                            ${humidityHtml}
-                            ${comfortHtml}
-                            ${batteryLow ? '<div class="battery-low">⚠️ Low battery</div>' : ''}
+                        </div>
+                        <div class="zone-pills-row">
+                            ${statusBadge}
+                            ${humidityBadge}
+                            ${windowBadge}
+                            ${batteryBadge}
+                            ${comfortBadge}
                         </div>
                     </div>
                 `;
@@ -1982,12 +2205,12 @@
             
             document.getElementById('modal-zone-name').textContent = currentZone.name;
             document.getElementById('modal-current-temp').textContent = 
-                `${state.cur_temp_c || '--'}°`;
+                `${state.cur_temp_c !== null && state.cur_temp_c !== undefined ? state.cur_temp_c.toFixed(1) : '--'}°`;
             
             // Show battery warning if needed
             const batteryWarning = document.getElementById('modal-battery-warning');
             if (state.battery_low) {
-                batteryWarning.style.display = 'block';
+                batteryWarning.style.display = 'inline-flex';
             } else {
                 batteryWarning.style.display = 'none';
             }
@@ -2003,6 +2226,35 @@
             
             updateTempDisplay();
             updateModeButtons();
+
+            // Populate thermostats in room
+            const devicesList = document.getElementById('modal-devices-list');
+            if (devicesList) {
+                const zoneDevices = allDevices.filter(d => d.zone_id === zoneId);
+                if (zoneDevices.length === 0) {
+                    devicesList.innerHTML = '<div style="font-size: 12px; color: var(--text-muted); padding: 4px;">No thermostats mapped directly to this room.</div>';
+                } else {
+                    devicesList.innerHTML = zoneDevices.map(d => {
+                        const isLow = d.state && d.state.battery_low;
+                        const serial = d.serial_number || '';
+                        const model = d.model || 'VA02';
+                        const fw = d.firmware_version ? ` · v${d.firmware_version}` : '';
+                        const isLeader = d.is_zone_leader ? ' · (Leader)' : '';
+                        return `
+                            <div class="device-row">
+                                <div class="device-meta">
+                                    <span class="device-name">${serial}</span>
+                                    <span class="device-sub">${model}${fw}${isLeader}</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    ${isLow ? '<span class="pill-badge pill-badge-battery">🪫 Low</span>' : '<span class="pill-badge">🔋 OK</span>'}
+                                    <button class="btn-card-blink" onclick="identifyDevice(${d.device_id}, this)" title="Blink display on this thermostat">✨ Blink</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
             
             // Reset to controls tab
             document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
@@ -2262,8 +2514,71 @@
             sendSmartScheduleMode(false);
         });
 
+        async function identifyZone(zoneId, btnEl) {
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.classList.add('blinking');
+                const prev = btnEl.innerHTML;
+                btnEl.textContent = 'Blinking...';
+                try {
+                    await fetch(`/zones/${zoneId}/identify`, { method: 'POST' });
+                    btnEl.textContent = '✨ Blinked!';
+                    setTimeout(() => {
+                        btnEl.disabled = false;
+                        btnEl.classList.remove('blinking');
+                        btnEl.innerHTML = prev;
+                    }, 3000);
+                } catch (e) {
+                    btnEl.textContent = 'Error';
+                    setTimeout(() => {
+                        btnEl.disabled = false;
+                        btnEl.classList.remove('blinking');
+                        btnEl.innerHTML = prev;
+                    }, 2000);
+                }
+            } else {
+                await fetch(`/zones/${zoneId}/identify`, { method: 'POST' });
+            }
+        }
+
+        async function identifyDevice(deviceId, btnEl) {
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.classList.add('blinking');
+                const prev = btnEl.innerHTML;
+                btnEl.textContent = 'Blinking...';
+                try {
+                    await fetch(`/devices/${deviceId}/identify`, { method: 'POST' });
+                    btnEl.textContent = '✨ Blinked!';
+                    setTimeout(() => {
+                        btnEl.disabled = false;
+                        btnEl.classList.remove('blinking');
+                        btnEl.innerHTML = prev;
+                    }, 3000);
+                } catch (e) {
+                    btnEl.textContent = 'Error';
+                    setTimeout(() => {
+                        btnEl.disabled = false;
+                        btnEl.classList.remove('blinking');
+                        btnEl.innerHTML = prev;
+                    }, 2000);
+                }
+            } else {
+                await fetch(`/devices/${deviceId}/identify`, { method: 'POST' });
+            }
+        }
+
         document.getElementById('btn-cancel').addEventListener('click', closeModal);
         document.getElementById('btn-apply').addEventListener('click', applyChanges);
+
+        const modalBlinkZone = document.getElementById('modal-blink-zone');
+        if (modalBlinkZone) {
+            modalBlinkZone.addEventListener('click', () => {
+                if (currentZone) {
+                    identifyZone(currentZone.zone_id, modalBlinkZone);
+                }
+            });
+        }
 
         document.getElementById('modal').addEventListener('click', (e) => {
             if (e.target.id === 'modal') {

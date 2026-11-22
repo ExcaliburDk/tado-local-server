@@ -30,6 +30,8 @@ class DeviceStateManager:
     """Manages device state tracking, history, and change detection."""
 
     # HomeKit characteristic UUIDs we care about
+    CHAR_IDENTIFY = '00000014-0000-1000-8000-0026bb765291'
+
     # Temperature & HVAC
     CHAR_CURRENT_TEMPERATURE = '00000011-0000-1000-8000-0026bb765291'
     CHAR_TARGET_TEMPERATURE = '00000035-0000-1000-8000-0026bb765291'

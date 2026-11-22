@@ -204,7 +204,8 @@ async def run_server(args):
                         from .__version__ import __version__ as tado_version
                         # Do not advertise the bridge IP here; advertise the daemon host
                         # so clients connect to this service instance to manage Tado.
-                        ok, method, msg, server_ip = await register_service_async(name='tado-local', port=args.port, props={
+                        mdns_port = int(os.getenv("TADO_EXTERNAL_PORT") or os.getenv("EXTERNAL_PORT") or args.port)
+                        ok, method, msg, server_ip = await register_service_async(name='tado-local', port=mdns_port, props={
                             'path': '/',
                             'version': tado_version,
                             'app': 'tado-local',
