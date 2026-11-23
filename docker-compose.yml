@@ -1,0 +1,24 @@
+services:
+  tado-local:
+    image: tado-local:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tado-local
+    restart: unless-stopped
+    ports:
+      - "4407:4407"
+    environment:
+      # Port mapped on your host (matches the port above for mDNS advertisement)
+      - EXTERNAL_PORT=4407
+      # Auto-purge history records older than X days to keep database small (default 30)
+      - PURGE_DAYS=30
+      # Optional: Explicit Tado Internet Bridge IP (if mDNS auto-discovery is blocked on your LAN)
+      # - TADO_BRIDGE_IP=192.168.1.100
+      # - TADO_BRIDGE_PIN=123-45-678
+    volumes:
+      - tado-data:/data
+
+volumes:
+  tado-data:
+    name: tado-local-data
