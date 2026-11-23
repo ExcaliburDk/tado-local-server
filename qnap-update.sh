@@ -137,6 +137,7 @@ docker_cmd run -d \
     --user 0:0 \
     -p "$HOST_PORT:$CONTAINER_PORT" \
     -e EXTERNAL_PORT="$HOST_PORT" \
+    -e HOME_NAME="${HOME_NAME:-Tado Local Server}" \
     -v "$DATA_VOLUME:/data" \
     "$IMAGE_NAME" >/dev/null
 

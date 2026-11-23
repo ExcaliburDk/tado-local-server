@@ -1589,7 +1589,7 @@
     <div class="container">
         <div class="header">
             <div class="header-left">
-                <h1 id="home-name">Tado Local</h1>
+                <h1 id="home-name">Tado Local Server</h1>
             </div>
             
             <div class="header-center">
@@ -2109,11 +2109,11 @@
                     } catch (e) {}
                 }
                 
-                // Update home name and page title if available (use first home)
-                if (data.homes && data.homes.length > 0 && data.homes[0].name) {
-                    document.getElementById('home-name').textContent = data.homes[0].name;
-                    document.title = `${data.homes[0].name} - Tado Local`;
-                }
+                // Update home name and page title if available (supports custom override or first home)
+                const customHomeName = localStorage.getItem('tado_custom_home_name');
+                const displayName = customHomeName || (data.homes && data.homes.length > 0 && data.homes[0].name) || 'Tado Local Server';
+                document.getElementById('home-name').textContent = displayName;
+                document.title = `${displayName} - Tado Local`;
                 
                 renderZones();
                 updateStatus(data);
@@ -2801,6 +2801,25 @@
         applyWindowStatus();
 
         // Add theme toggle listener
+        // Home name click to rename
+        const homeNameEl = document.getElementById('home-name');
+        if (homeNameEl) {
+            homeNameEl.style.cursor = 'pointer';
+            homeNameEl.title = 'Click to rename home display name';
+            homeNameEl.addEventListener('click', () => {
+                const current = homeNameEl.textContent;
+                const newName = prompt('Enter custom name for your home (leave empty to reset):', current);
+                if (newName !== null) {
+                    if (newName.trim()) {
+                        localStorage.setItem('tado_custom_home_name', newName.trim());
+                    } else {
+                        localStorage.removeItem('tado_custom_home_name');
+                    }
+                    loadZones();
+                }
+            });
+        }
+
         document.getElementById('theme-toggle').addEventListener('click', () => {
             const current = getEffectiveTheme();
             const next = current === 'dark' ? 'light' : 'dark';

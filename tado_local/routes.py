@@ -616,16 +616,24 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
 
         # Get home info if cloud API is available and authenticated
         homes = []
+        override_home_name = os.getenv('TADO_HOME_NAME') or os.getenv('HOME_NAME')
         if hasattr(tado_api, 'cloud_api') and tado_api.cloud_api and tado_api.cloud_api.is_authenticated():
             try:
                 home_data = await tado_api.cloud_api.get_home_info()
                 if home_data:
+                    home_name = override_home_name if override_home_name else home_data.get('name')
                     homes.append({
                         'id': home_data.get('id'),
-                        'name': home_data.get('name')
+                        'name': home_name
                     })
             except Exception as e:
                 logger.debug(f"Could not fetch home info: {e}")
+
+        if not homes and override_home_name:
+            homes.append({
+                'id': 1,
+                'name': override_home_name
+            })
 
         # Add home_id reference to each zone (from first/only home for now)
         home_id = homes[0]['id'] if homes else None
@@ -969,16 +977,24 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
 
         # Get home info if cloud API is available and authenticated
         homes = []
+        override_home_name = os.getenv('TADO_HOME_NAME') or os.getenv('HOME_NAME')
         if hasattr(tado_api, 'cloud_api') and tado_api.cloud_api and tado_api.cloud_api.is_authenticated():
             try:
                 home_data = await tado_api.cloud_api.get_home_info()
                 if home_data:
+                    home_name = override_home_name if override_home_name else home_data.get('name')
                     homes.append({
                         'id': home_data.get('id'),
-                        'name': home_data.get('name')
+                        'name': home_name
                     })
             except Exception as e:
                 logger.debug(f"Could not fetch home info: {e}")
+
+        if not homes and override_home_name:
+            homes.append({
+                'id': 1,
+                'name': override_home_name
+            })
 
         # Add home_id reference to each zone (from first/only home for now)
         home_id = homes[0]['id'] if homes else None

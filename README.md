@@ -134,6 +134,7 @@ docker run -d \
 
 | Variable | Default | Description |
 |---|---|---|
+| `HOME_NAME` | `Tado Local Server` | Custom display name for your home in the Web UI (can also be changed directly by clicking the title in the browser). |
 | `EXTERNAL_PORT` | `4407` | Host port mapped to the container (used for accurate mDNS zeroconf advertisement). |
 | `PURGE_DAYS` | `30` | Auto-purges history data older than this number of days from the SQLite database. |
 | `TADO_BRIDGE_IP` | *auto* | IP address of your Tado Internet Bridge (optional; mDNS discovers it automatically). |
