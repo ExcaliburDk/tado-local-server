@@ -30,6 +30,18 @@ All foundational HomeKit reverse-engineering, local protocol communication, and 
 
 ---
 
+## 📸 Web Interface Preview
+
+| Main Dashboard Overview | Streamlined 2-Column Room Controls |
+|:---:|:---:|
+| ![Zone Overview](docs/images/zone-overview.png) | ![Zone Control](docs/images/zone-control.png) |
+
+| Historical Temperature, Humidity & Heating Analytics |
+|:---:|
+| ![Visual History Chart](docs/images/history-chart.png) |
+
+---
+
 ## 🏠 Companion Home Assistant Integration
 
 Looking for Home Assistant control? Use our custom HACS integration designed specifically to pair with this server:
