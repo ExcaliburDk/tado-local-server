@@ -49,18 +49,9 @@ docker_cmd() {
     fi
 }
 
-# Auto-detect existing container name (prefers Tado-Local-Server, falls back to tado-local or tado-local-test)
-if [ -z "${CONTAINER_NAME:-}" ]; then
-    if docker_cmd ps -a --format '{{.Names}}' | grep -qx "Tado-Local-Server"; then
-        CONTAINER_NAME="Tado-Local-Server"
-    elif docker_cmd ps -a --format '{{.Names}}' | grep -qx "tado-local"; then
-        CONTAINER_NAME="tado-local"
-    elif docker_cmd ps -a --format '{{.Names}}' | grep -qx "tado-local-test"; then
-        CONTAINER_NAME="tado-local-test"
-    else
-        CONTAINER_NAME="Tado-Local-Server"
-    fi
-fi
+# Container and image settings (defaults to Tado-Local-Server)
+CONTAINER_NAME="${CONTAINER_NAME:-Tado-Local-Server}"
+IMAGE_NAME="${IMAGE_NAME:-tado-local-server:latest}"
 
 # Auto-detect existing data volume (preserves existing pairing data)
 if [ -z "${DATA_VOLUME:-}" ]; then
@@ -74,8 +65,6 @@ if [ -z "${DATA_VOLUME:-}" ]; then
         DATA_VOLUME="tado-local-server-data"
     fi
 fi
-
-IMAGE_NAME="${IMAGE_NAME:-$CONTAINER_NAME:latest}"
 
 echo "=========================================================="
 echo " Updating Tado Local Server"
@@ -109,18 +98,8 @@ tar -xzf "$ARCHIVE_FILE" -C "$WORK_DIR/unpacked" --strip-components=1
 [ -f "$WORK_DIR/unpacked/Dockerfile" ] || fail "Downloaded archive does not contain Dockerfile"
 
 echo "Updating project files in $PROJECT_DIR..."
-# Temporarily move self out of way during copy to avoid script truncation
-UPDATER_BACKUP="$WORK_DIR/qnap-update.sh"
-if [ -f "$PROJECT_DIR/qnap-update.sh" ]; then
-    mv "$PROJECT_DIR/qnap-update.sh" "$UPDATER_BACKUP"
-fi
-
 cp -a "$WORK_DIR/unpacked"/. "$PROJECT_DIR"/
-
-if [ -f "$UPDATER_BACKUP" ]; then
-    mv "$UPDATER_BACKUP" "$PROJECT_DIR/qnap-update.sh"
-    chmod +x "$PROJECT_DIR/qnap-update.sh"
-fi
+chmod +x "$PROJECT_DIR/qnap-update.sh" "$PROJECT_DIR/qnap-setup.sh" 2>/dev/null || true
 
 echo "Building Docker image: $IMAGE_NAME..."
 docker_cmd build --no-cache -t "$IMAGE_NAME" "$PROJECT_DIR"
