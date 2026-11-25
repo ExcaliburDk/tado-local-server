@@ -1942,8 +1942,8 @@
                             <span class="switch-slider"></span>
                         </label>
                         <div>
-                            <div class="schedule-overrule-title">Overrule Tado Cloud App (Brug lokal tidsplan)</div>
-                            <div class="schedule-overrule-desc">Styr opvarmningen 100% lokalt på LAN uden cloud. Tilsidesætter Tado appens tidsplan.</div>
+                            <div class="schedule-overrule-title">Overrule Tado Cloud App (Use Local Schedule)</div>
+                            <div class="schedule-overrule-desc">Control heating 100% locally on your LAN. Bypasses the Tado Cloud app schedule for this room.</div>
                         </div>
                     </div>
                     <span id="schedule-status-pill" class="pill-badge">Cloud Mode</span>
@@ -1951,26 +1951,26 @@
 
                 <!-- Day selector pills -->
                 <div class="schedule-days-bar" id="schedule-days-bar">
-                    <button class="schedule-day-btn active" data-day="-1" type="button">Alle dage</button>
-                    <button class="schedule-day-btn" data-day="0" type="button">Man</button>
-                    <button class="schedule-day-btn" data-day="1" type="button">Tirs</button>
-                    <button class="schedule-day-btn" data-day="2" type="button">Ons</button>
-                    <button class="schedule-day-btn" data-day="3" type="button">Tors</button>
-                    <button class="schedule-day-btn" data-day="4" type="button">Fre</button>
-                    <button class="schedule-day-btn" data-day="5" type="button">Lør</button>
-                    <button class="schedule-day-btn" data-day="6" type="button">Søn</button>
+                    <button class="schedule-day-btn active" data-day="-1" type="button">All days</button>
+                    <button class="schedule-day-btn" data-day="0" type="button">Mon</button>
+                    <button class="schedule-day-btn" data-day="1" type="button">Tue</button>
+                    <button class="schedule-day-btn" data-day="2" type="button">Wed</button>
+                    <button class="schedule-day-btn" data-day="3" type="button">Thu</button>
+                    <button class="schedule-day-btn" data-day="4" type="button">Fri</button>
+                    <button class="schedule-day-btn" data-day="5" type="button">Sat</button>
+                    <button class="schedule-day-btn" data-day="6" type="button">Sun</button>
                 </div>
 
                 <!-- Current active block indicator -->
                 <div id="schedule-active-info" class="schedule-active-info" style="display: none;">
-                    Aktiv lige nu: <strong id="schedule-active-text">--</strong>
+                    Active right now: <strong id="schedule-active-text">--</strong>
                 </div>
 
                 <!-- Time blocks table / list -->
                 <div class="schedule-blocks-container">
                     <div class="schedule-blocks-header">
-                        <span id="schedule-day-title">Tidsrum for alle dage</span>
-                        <button class="btn btn-sm btn-secondary" id="btn-add-block" type="button">+ Tilføj tidsblok</button>
+                        <span id="schedule-day-title">Time blocks for all days</span>
+                        <button class="btn btn-sm btn-secondary" id="btn-add-block" type="button">+ Add Block</button>
                     </div>
                     <div id="schedule-blocks-list" class="schedule-blocks-list">
                         <!-- Populated by JS -->
@@ -1979,9 +1979,9 @@
 
                 <!-- Actions -->
                 <div class="action-buttons" style="margin-top: 16px;">
-                    <button class="btn btn-secondary" id="btn-copy-schedule" type="button" title="Kopiér denne dags tidsplan til alle ugens dage">Kopiér til alle dage</button>
-                    <button class="btn btn-secondary" id="btn-apply-schedule-now" type="button" title="Gennemtving aktiv tidsblok nu">⚡ Aktivér nu</button>
-                    <button class="btn btn-primary" id="btn-save-schedule" type="button">Gem tidsplan</button>
+                    <button class="btn btn-secondary" id="btn-copy-schedule" type="button" title="Copy this day's schedule to all days of the week">Copy to All Days</button>
+                    <button class="btn btn-secondary" id="btn-apply-schedule-now" type="button" title="Force apply the currently active scheduled block now">⚡ Apply Now</button>
+                    <button class="btn btn-primary" id="btn-save-schedule" type="button">Save Schedule</button>
                 </div>
             </div>
 
@@ -3112,23 +3112,23 @@
         // Local Schedule Engine Frontend Logic
         // ==========================================
         let currentSchedule = { enabled: false, blocks: [], active_block: null };
-        let selectedScheduleDay = -1; // -1 = Alle dage, 0 = Man .. 6 = Søn
+        let selectedScheduleDay = -1; // -1 = All days, 0 = Mon .. 6 = Sun
 
         const DAY_NAMES = {
-            '-1': 'Alle dage',
-            '0': 'Mandag',
-            '1': 'Tirsdag',
-            '2': 'Onsdag',
-            '3': 'Torsdag',
-            '4': 'Fredag',
-            '5': 'Lørdag',
-            '6': 'Søndag'
+            '-1': 'All days',
+            '0': 'Monday',
+            '1': 'Tuesday',
+            '2': 'Wednesday',
+            '3': 'Thursday',
+            '4': 'Friday',
+            '5': 'Saturday',
+            '6': 'Sunday'
         };
 
         async function loadZoneSchedule(zoneId) {
             try {
                 const response = await fetch(`/zones/${zoneId}/schedule`);
-                if (!response.ok) throw new Error('Kunne ikke hente tidsplan');
+                if (!response.ok) throw new Error('Could not fetch schedule');
                 currentSchedule = await response.json();
                 
                 // Update overrule toggle
@@ -3139,7 +3139,7 @@
                 updateActiveBlockInfo();
                 renderScheduleBlocks();
             } catch (err) {
-                console.error('Fejl ved indlæsning af schedule:', err);
+                console.error('Error loading schedule:', err);
             }
         }
 
@@ -3148,10 +3148,10 @@
             if (!pill) return;
             if (currentSchedule.enabled) {
                 pill.className = 'pill-badge pill-badge-schedule';
-                pill.textContent = '⚡ Lokal overrule aktiv';
+                pill.textContent = '⚡ Local Overrule Active';
             } else {
                 pill.className = 'pill-badge';
-                pill.textContent = 'Sky-tidsplan / Manuel';
+                pill.textContent = 'Cloud / Manual Mode';
             }
         }
 
@@ -3162,11 +3162,11 @@
 
             if (currentSchedule.enabled && currentSchedule.active_block) {
                 const ab = currentSchedule.active_block;
-                const dayLabel = ab.day_of_week === -1 ? 'alle dage' : (DAY_NAMES[ab.day_of_week] || '');
-                textEl.textContent = `Kl. ${ab.start_time} (${ab.target_temperature}°C, ${dayLabel})`;
+                const dayLabel = ab.day_of_week === -1 ? 'all days' : (DAY_NAMES[ab.day_of_week] || '');
+                textEl.textContent = `At ${ab.start_time} (${ab.target_temperature}°C, ${dayLabel})`;
                 infoBox.style.display = 'block';
             } else if (currentSchedule.enabled) {
-                textEl.textContent = 'Ingen aktiv blok defineret';
+                textEl.textContent = 'No active block defined';
                 infoBox.style.display = 'block';
             } else {
                 infoBox.style.display = 'none';
@@ -3179,7 +3179,7 @@
             if (!listEl) return;
 
             if (titleEl) {
-                titleEl.textContent = `Tidsrum for: ${DAY_NAMES[selectedScheduleDay] || 'Valgt dag'}`;
+                titleEl.textContent = `Time blocks for: ${DAY_NAMES[selectedScheduleDay] || 'Selected day'}`;
             }
 
             // Filter blocks for selected day
@@ -3189,8 +3189,8 @@
             if (blocks.length === 0) {
                 listEl.innerHTML = `
                     <div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 20px;">
-                        Ingen tidsblokke oprettet for ${DAY_NAMES[selectedScheduleDay]}.<br>
-                        Klik <strong>+ Tilføj tidsblok</strong> ovenfor for at starte.
+                        No schedule blocks created for ${DAY_NAMES[selectedScheduleDay]}.<br>
+                        Click <strong>+ Add Block</strong> above to get started.
                     </div>
                 `;
                 return;
@@ -3201,7 +3201,7 @@
                 return `
                     <div class="schedule-block-row">
                         <div class="schedule-block-time">
-                            <span>⏰ Starter kl.</span>
+                            <span>⏰ Starts at</span>
                             <input type="time" class="schedule-time-input" value="${b.start_time}" 
                                    onchange="updateBlockTime(${identifier}, this.value)">
                         </div>
@@ -3209,7 +3209,7 @@
                             <button type="button" class="schedule-temp-btn" onclick="adjustBlockTemp(${identifier}, -0.5)">−</button>
                             <span class="schedule-temp-val">${Number(b.target_temperature).toFixed(1)}°</span>
                             <button type="button" class="schedule-temp-btn" onclick="adjustBlockTemp(${identifier}, 0.5)">+</button>
-                            <button type="button" class="schedule-block-delete" onclick="removeScheduleBlock(${identifier})" title="Slet tidsblok">🗑️</button>
+                            <button type="button" class="schedule-block-delete" onclick="removeScheduleBlock(${identifier})" title="Delete block">🗑️</button>
                         </div>
                     </div>
                 `;
@@ -3274,7 +3274,7 @@
             const saveBtn = document.getElementById('btn-save-schedule');
             const prevText = saveBtn.textContent;
             saveBtn.disabled = true;
-            saveBtn.textContent = 'Gemmer...';
+            saveBtn.textContent = 'Saving...';
 
             try {
                 const response = await fetch(`/zones/${currentZone.zone_id}/schedule`, {
@@ -3288,13 +3288,13 @@
 
                 if (!response.ok) {
                     const err = await response.json();
-                    throw new Error(err.detail || 'Kunne ikke gemme tidsplan');
+                    throw new Error(err.detail || 'Could not save schedule');
                 }
 
                 currentSchedule = await response.json();
                 updateScheduleStatusPill();
                 updateActiveBlockInfo();
-                saveBtn.textContent = '✓ Gemt!';
+                saveBtn.textContent = '✓ Saved!';
                 setTimeout(() => {
                     saveBtn.disabled = false;
                     saveBtn.textContent = prevText;
@@ -3306,7 +3306,7 @@
             } catch (err) {
                 saveBtn.disabled = false;
                 saveBtn.textContent = prevText;
-                alert('Fejl: ' + err.message);
+                alert('Error: ' + err.message);
             }
         }
 
@@ -3315,13 +3315,13 @@
             const btn = document.getElementById('btn-apply-schedule-now');
             const prevText = btn.textContent;
             btn.disabled = true;
-            btn.textContent = 'Aktivér...';
+            btn.textContent = 'Applying...';
 
             try {
                 // Ensure enabled is true
                 document.getElementById('schedule-enable-toggle').checked = true;
                 await saveSchedule();
-                btn.textContent = '✓ Aktiveret!';
+                btn.textContent = '✓ Applied!';
                 setTimeout(() => {
                     btn.disabled = false;
                     btn.textContent = prevText;
@@ -3335,10 +3335,10 @@
         function copyScheduleToAllDays() {
             const currentBlocks = (currentSchedule.blocks || []).filter(b => b.day_of_week === selectedScheduleDay);
             if (currentBlocks.length === 0) {
-                alert('Der er ingen tidsblokke for den valgte dag at kopiere.');
+                alert('There are no schedule blocks for the selected day to copy.');
                 return;
             }
-            if (!confirm(`Vil du kopiere tidsplanen fra ${DAY_NAMES[selectedScheduleDay]} til alle ugens dage? Dette vil erstatte tidsplanen for alle dage.`)) {
+            if (!confirm(`Do you want to copy the schedule from ${DAY_NAMES[selectedScheduleDay]} to all days of the week? This will replace the schedule for other days.`)) {
                 return;
             }
 
@@ -3355,7 +3355,7 @@
             }
             currentSchedule.blocks = newBlocks;
             renderScheduleBlocks();
-            alert('Tidsplan kopieret! Husk at klikke "Gem tidsplan" for at gemme ændringerne.');
+            alert('Schedule copied! Remember to click "Save Schedule" to apply the changes.');
         }
 
         // Toggle overrule checkbox change
