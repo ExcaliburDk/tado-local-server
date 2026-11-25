@@ -1,17 +1,18 @@
 #!/bin/sh
 set -eu
 
-TARGET_DIR=${1:-/share/Container/TadoLocal-test}
+TARGET_DIR=${1:-/share/Container/Tado-Local-Server}
 ZIP_FILE=${2:-"$TARGET_DIR/TadoLocal-setup-web.zip"}
 SOURCE_DIR="$TARGET_DIR/source-web"
-IMAGE_NAME=${IMAGE_NAME:-tado-local-test:setup-web}
-CONTAINER_NAME=${CONTAINER_NAME:-tado-local-test}
-VOLUME_NAME=${VOLUME_NAME:-tado-local-test-data}
+IMAGE_NAME=${IMAGE_NAME:-tado-local-server:latest}
+CONTAINER_NAME=${CONTAINER_NAME:-Tado-Local-Server}
+VOLUME_NAME=${VOLUME_NAME:-tado-local-server-data}
 HOST_PORT=${HOST_PORT:-4408}
 
-echo "TadoLocal QNAP test setup"
+echo "TadoLocal QNAP Server setup"
 echo "Project directory: $TARGET_DIR"
 echo "ZIP file:          $ZIP_FILE"
+echo "Container name:    $CONTAINER_NAME"
 echo "Web address:       http://$(hostname -I 2>/dev/null | awk '{print $1}'):$HOST_PORT"
 echo
 
@@ -33,14 +34,28 @@ echo "Building Docker image..."
 docker build --no-cache -t "$IMAGE_NAME" "$SOURCE_DIR"
 
 echo "Creating data volume..."
+# Preserve existing volume if migrating from test setup
+if [ "$VOLUME_NAME" = "tado-local-server-data" ] && ! docker volume inspect "$VOLUME_NAME" >/dev/null 2>&1; then
+    if docker volume inspect tado-local-data >/dev/null 2>&1; then
+        VOLUME_NAME="tado-local-data"
+    elif docker volume inspect tado-local-test-data >/dev/null 2>&1; then
+        VOLUME_NAME="tado-local-test-data"
+    fi
+fi
 docker volume create "$VOLUME_NAME" >/dev/null
 
 if docker container inspect "$CONTAINER_NAME" >/dev/null 2>&1; then
-    echo "Removing existing test container $CONTAINER_NAME..."
+    echo "Removing existing container $CONTAINER_NAME..."
     docker rm -f "$CONTAINER_NAME" >/dev/null
 fi
 
-echo "Starting isolated test container..."
+# Clean up legacy test container if migrating so port is not occupied
+if [ "$CONTAINER_NAME" = "Tado-Local-Server" ] && docker container inspect tado-local-test >/dev/null 2>&1; then
+    echo "Removing previous test container: tado-local-test..."
+    docker rm -f tado-local-test >/dev/null
+fi
+
+echo "Starting container $CONTAINER_NAME..."
 docker run -d \
     --name "$CONTAINER_NAME" \
     --user 0:0 \

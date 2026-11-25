@@ -49,25 +49,29 @@ docker_cmd() {
     fi
 }
 
-# Auto-detect existing container name (prefers tado-local, falls back to tado-local-test)
+# Auto-detect existing container name (prefers Tado-Local-Server, falls back to tado-local or tado-local-test)
 if [ -z "${CONTAINER_NAME:-}" ]; then
-    if docker_cmd ps -a --format '{{.Names}}' | grep -qx "tado-local"; then
+    if docker_cmd ps -a --format '{{.Names}}' | grep -qx "Tado-Local-Server"; then
+        CONTAINER_NAME="Tado-Local-Server"
+    elif docker_cmd ps -a --format '{{.Names}}' | grep -qx "tado-local"; then
         CONTAINER_NAME="tado-local"
     elif docker_cmd ps -a --format '{{.Names}}' | grep -qx "tado-local-test"; then
         CONTAINER_NAME="tado-local-test"
     else
-        CONTAINER_NAME="tado-local"
+        CONTAINER_NAME="Tado-Local-Server"
     fi
 fi
 
 # Auto-detect existing data volume (preserves existing pairing data)
 if [ -z "${DATA_VOLUME:-}" ]; then
-    if docker_cmd volume ls --format '{{.Name}}' | grep -qx "tado-local-data"; then
+    if docker_cmd volume ls --format '{{.Name}}' | grep -qx "tado-local-server-data"; then
+        DATA_VOLUME="tado-local-server-data"
+    elif docker_cmd volume ls --format '{{.Name}}' | grep -qx "tado-local-data"; then
         DATA_VOLUME="tado-local-data"
     elif docker_cmd volume ls --format '{{.Name}}' | grep -qx "tado-local-test-data"; then
         DATA_VOLUME="tado-local-test-data"
     else
-        DATA_VOLUME="tado-local-data"
+        DATA_VOLUME="tado-local-server-data"
     fi
 fi
 
@@ -125,6 +129,13 @@ if docker_cmd ps -a --format '{{.Names}}' | grep -qx "$CONTAINER_NAME"; then
     echo "Stopping and replacing container: $CONTAINER_NAME..."
     docker_cmd stop "$CONTAINER_NAME" >/dev/null 2>&1 || true
     docker_cmd rm "$CONTAINER_NAME" >/dev/null 2>&1 || true
+fi
+
+# Also remove legacy test container if transitioning to Tado-Local-Server
+if [ "$CONTAINER_NAME" = "Tado-Local-Server" ] && docker_cmd ps -a --format '{{.Names}}' | grep -qx "tado-local-test"; then
+    echo "Removing legacy test container: tado-local-test..."
+    docker_cmd stop "tado-local-test" >/dev/null 2>&1 || true
+    docker_cmd rm "tado-local-test" >/dev/null 2>&1 || true
 fi
 
 echo "Ensuring volume exists: $DATA_VOLUME..."
