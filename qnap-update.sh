@@ -98,8 +98,16 @@ tar -xzf "$ARCHIVE_FILE" -C "$WORK_DIR/unpacked" --strip-components=1
 [ -f "$WORK_DIR/unpacked/Dockerfile" ] || fail "Downloaded archive does not contain Dockerfile"
 
 echo "Updating project files in $PROJECT_DIR..."
-cp -a "$WORK_DIR/unpacked"/. "$PROJECT_DIR"/
-chmod +x "$PROJECT_DIR/qnap-update.sh" "$PROJECT_DIR/qnap-setup.sh" 2>/dev/null || true
+if ! cp -a "$WORK_DIR/unpacked"/. "$PROJECT_DIR"/ 2>/dev/null; then
+    if command -v sudo >/dev/null 2>&1; then
+        echo "Standard user lacks write permissions on existing files. Elevating with sudo..."
+        sudo cp -a "$WORK_DIR/unpacked"/. "$PROJECT_DIR"/
+        sudo chown -R "$(id -u):$(id -g)" "$PROJECT_DIR" 2>/dev/null || true
+    else
+        cp -a "$WORK_DIR/unpacked"/. "$PROJECT_DIR"/
+    fi
+fi
+chmod +x "$PROJECT_DIR/qnap-update.sh" "$PROJECT_DIR/qnap-setup.sh" 2>/dev/null || sudo chmod +x "$PROJECT_DIR/qnap-update.sh" "$PROJECT_DIR/qnap-setup.sh" 2>/dev/null || true
 
 echo "Building Docker image: $IMAGE_NAME..."
 docker_cmd build --no-cache -t "$IMAGE_NAME" "$PROJECT_DIR"
