@@ -300,6 +300,55 @@ class LocalScheduler:
 
         return None
 
+    def get_next_block(
+        self,
+        zone_id: int,
+        now: Optional[datetime.datetime] = None
+    ) -> Optional[Tuple[Dict[str, Any], int]]:
+        """
+        Find the next schedule block today after current time and return (block, minutes_until_start).
+        """
+        now = now or datetime.datetime.now()
+        current_weekday = now.weekday()
+        current_time_str = now.strftime("%H:%M")
+        now_minutes = now.hour * 60 + now.minute
+
+        conn = self._get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT id, zone_id, day_of_week, start_time, target_temperature
+                FROM local_schedules
+                WHERE zone_id = ?
+                ORDER BY start_time ASC
+                """,
+                (zone_id,)
+            )
+            all_blocks = [dict(row) for row in cur.fetchall()]
+        finally:
+            conn.close()
+
+        if not all_blocks:
+            return None
+
+        today_blocks = [
+            b for b in all_blocks
+            if b["day_of_week"] == current_weekday or b["day_of_week"] == -1
+        ]
+        day_specific = [b for b in today_blocks if b["day_of_week"] == current_weekday]
+        pool = day_specific if day_specific else today_blocks
+        pool.sort(key=lambda x: x["start_time"])
+
+        for b in pool:
+            if b["start_time"] > current_time_str:
+                parts = b["start_time"].split(":")
+                block_min = int(parts[0]) * 60 + int(parts[1])
+                diff_min = block_min - now_minutes
+                return b, diff_min
+
+        return None
+
     async def evaluate_zone(self, zone_id: int, force: bool = False) -> Optional[float]:
         """
         Check and apply the scheduled temperature for a single zone if active and changed.
@@ -314,6 +363,49 @@ class LocalScheduler:
                 return None
         finally:
             conn.close()
+
+        # Check if Skills override schedule (Away Mode or active Open Window)
+        skills = getattr(self.api, "skills_manager", None)
+        if skills:
+            if hasattr(skills, "get_away_status"):
+                try:
+                    away_status = skills.get_away_status()
+                    if isinstance(away_status, dict) and away_status.get("enabled") and away_status.get("is_away"):
+                        return None
+                except Exception:
+                    pass
+
+            if hasattr(skills, "window_saved_states") and isinstance(skills.window_saved_states, dict):
+                if zone_id in skills.window_saved_states:
+                    return None
+
+            # Check Early Start if next block is approaching
+            if hasattr(skills, "check_early_start"):
+                try:
+                    next_info = self.get_next_block(zone_id)
+                    if next_info:
+                        next_block, minutes_until = next_info
+                        zone_info = self.api.state_manager.zone_cache.get(zone_id, {}) if (self.api and hasattr(self.api, "state_manager") and self.api.state_manager) else {}
+                        leader_id = zone_info.get("leader_device_id")
+                        cur_state = self.api.state_manager.get_current_state(leader_id) if (leader_id and self.api and self.api.state_manager) else {}
+                        current_temp = cur_state.get("current_temperature")
+                        if current_temp is not None:
+                            preheat_temp = skills.check_early_start(
+                                zone_id=zone_id,
+                                current_temp=current_temp,
+                                next_block_temp=next_block["target_temperature"],
+                                minutes_until_block=minutes_until,
+                            )
+                            if preheat_temp is not None:
+                                early_key = (next_block["day_of_week"], next_block["start_time"], "early_start", preheat_temp)
+                                if force or self.last_applied_block.get(zone_id) != early_key:
+                                    logger.info(f"[LocalScheduler] Early Start: Preheating zone {zone_id} to {preheat_temp}°C")
+                                    success = await self.api.set_zone_temperature(zone_id, preheat_temp)
+                                    if success:
+                                        self.last_applied_block[zone_id] = early_key
+                                        return preheat_temp
+                except Exception as e:
+                    logger.debug(f"[LocalScheduler] Early start check skipped: {e}")
 
         active_block = self.get_active_block(zone_id)
         if not active_block:

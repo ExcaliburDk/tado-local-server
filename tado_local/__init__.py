@@ -28,6 +28,8 @@ from .state import DeviceStateManager
 from .api import TadoLocalAPI
 from .cloud import TadoCloudAPI, RateLimitInfo
 from .sync import TadoCloudSync
+from .scheduler import LocalScheduler
+from .skills import SkillsManager
 from . import homekit_uuids
 
 __all__ = [
@@ -41,5 +43,7 @@ __all__ = [
     "TadoCloudAPI",
     "RateLimitInfo",
     "TadoCloudSync",
+    "LocalScheduler",
+    "SkillsManager",
     "homekit_uuids",
 ]

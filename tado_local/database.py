@@ -182,6 +182,25 @@ CREATE TABLE IF NOT EXISTS zone_schedule_config (
 );
 """
 
+SKILLS_SCHEMA = """
+CREATE TABLE IF NOT EXISTS skills_config (
+    skill_id TEXT PRIMARY KEY,
+    enabled BOOLEAN NOT NULL DEFAULT 0,
+    config_json TEXT NOT NULL DEFAULT '{}',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS zone_skills_config (
+    zone_id INTEGER NOT NULL,
+    skill_id TEXT NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT 1,
+    config_json TEXT NOT NULL DEFAULT '{}',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (zone_id, skill_id),
+    FOREIGN KEY (zone_id) REFERENCES zones(zone_id) ON DELETE CASCADE
+);
+"""
+
 
 def ensure_schema_and_migrate(db_path: str):
     """Ensure all schemas exist and run DB migrations using PRAGMA user_version.
@@ -195,7 +214,7 @@ def ensure_schema_and_migrate(db_path: str):
     # Supported schema version for this codebase. If the database reports a
     # higher user_version we should refuse to start to avoid silent data loss
     # or incompatible assumptions.
-    SUPPORTED_SCHEMA_VERSION = 4
+    SUPPORTED_SCHEMA_VERSION = 5
 
     # Open connection and check current schema version before applying changes
     conn = sqlite3.connect(db_path)
@@ -301,6 +320,21 @@ def ensure_schema_and_migrate(db_path: str):
                 pass
             raise
 
+    # Migration to version 5: skills configuration tables
+    if current_version < 5:
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            _apply_script_tolerant(conn, SKILLS_SCHEMA)
+            conn.execute("PRAGMA user_version = 5")
+            current_version = 5
+            conn.commit()
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+
     conn.close()
 
     # Ensure all schema scripts applied now that migrations are done
@@ -309,5 +343,6 @@ def ensure_schema_and_migrate(db_path: str):
     _apply_script_tolerant(conn, HOMEKIT_SCHEMA)
     _apply_script_tolerant(conn, CLOUD_SCHEMA)
     _apply_script_tolerant(conn, SCHEDULE_SCHEMA)
+    _apply_script_tolerant(conn, SKILLS_SCHEMA)
     conn.commit()
     conn.close()

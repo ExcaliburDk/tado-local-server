@@ -1656,6 +1656,194 @@
             font-size: 12px;
             border-radius: 6px;
         }
+
+        /* Away Mode Toggle Button */
+        .away-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
+            padding: 7px 13px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 650;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .away-toggle-btn:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+        .away-toggle-btn.is-away {
+            background: rgba(245, 158, 11, 0.16);
+            border-color: #f59e0b;
+            color: #d97706;
+        }
+        [data-theme="dark"] .away-toggle-btn.is-away {
+            background: rgba(245, 158, 11, 0.22);
+            color: #fbbf24;
+            border-color: #f59e0b;
+        }
+
+        /* Skills Header Button */
+        .skills-header-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: color-mix(in srgb, var(--accent) 12%, var(--bg-card));
+            border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border-light));
+            color: var(--accent);
+            padding: 7px 13px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 650;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .skills-header-btn:hover {
+            background: color-mix(in srgb, var(--accent) 22%, var(--bg-card));
+            transform: translateY(-1px);
+        }
+
+        /* Open Window Alert Pill & Badges */
+        .pill-badge-window-alert {
+            background: rgba(239, 68, 68, 0.16);
+            color: #dc2626;
+            border-color: rgba(239, 68, 68, 0.4);
+            font-weight: 700;
+            cursor: pointer;
+            animation: pulse-alert 2s infinite;
+        }
+        [data-theme="dark"] .pill-badge-window-alert {
+            background: rgba(239, 68, 68, 0.25);
+            color: #f87171;
+            border-color: rgba(248, 113, 113, 0.5);
+        }
+        @keyframes pulse-alert {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.85; transform: scale(0.98); }
+        }
+
+        .pill-badge-away {
+            background: rgba(245, 158, 11, 0.14);
+            color: #d97706;
+            border-color: rgba(245, 158, 11, 0.35);
+        }
+
+        /* Skills Modal Styling */
+        .skills-modal-content {
+            max-width: 680px;
+            max-height: 88vh;
+            overflow-y: auto;
+        }
+        .skills-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .skill-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 16px 18px;
+            margin-bottom: 14px;
+            transition: border-color 0.2s;
+        }
+        .skill-card:hover {
+            border-color: var(--accent);
+        }
+        .skill-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .skill-card-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .skill-icon {
+            font-size: 24px;
+            line-height: 1;
+        }
+        .skill-name {
+            font-size: 15.5px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .skill-desc {
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            line-height: 1.45;
+        }
+        .skill-config-body {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-light);
+            display: grid;
+            gap: 10px;
+        }
+        .skill-config-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        .skill-config-input {
+            width: 80px;
+            padding: 5px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 13px;
+            text-align: right;
+        }
+        .skill-config-select {
+            padding: 5px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        .diag-item {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 12.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+        }
+        .diag-item.warning {
+            border-left: 3px solid #f59e0b;
+        }
+        .diag-item.danger {
+            border-left: 3px solid #ef4444;
+        }
+
+        .skills-zone-box {
+            display: grid;
+            gap: 12px;
+        }
+        .skills-zone-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+        .skills-zone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
     </style>
     <svg aria-hidden="true" style="display:none;" id="svgdefs" version="2" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -1819,6 +2007,13 @@
             </div>
 
             <div class="header-right">
+                <button class="away-toggle-btn" id="away-toggle-btn" onclick="toggleAwayMode()" title="Toggle Home / Away eco mode">
+                    <span id="away-toggle-icon">🏠</span>
+                    <span id="away-toggle-text">Home</span>
+                </button>
+                <button class="skills-header-btn" id="skills-header-btn" onclick="openSkillsModal()" title="Tado Skills (Open Window, Away, Early Start, Air Comfort, Care & Protect)">
+                    ⚡ Skills
+                </button>
                 <button class="window-toggle" id="window-toggle" title="Toggle show open window-status" aria-label="Toggle show open window-status">
                     <svg width="25" height="25" version="2.0" style="color: gray"><use id="window-toggle-icon" href="#window-open" /></svg>
                 </button>
@@ -1860,6 +2055,28 @@
         </div>
     </div>
 
+    <!-- Skills Manager Modal -->
+    <div class="modal" id="skills-modal" style="display: none;">
+        <div class="modal-content skills-modal-content">
+            <div class="modal-header">
+                <div class="modal-header-top">
+                    <div class="modal-title-wrap">
+                        <h2 class="modal-title">⚡ Tado Skills & Automation</h2>
+                        <span class="modal-current-badge">Offline & Local</span>
+                    </div>
+                    <div class="modal-header-actions">
+                        <button class="modal-close-btn" onclick="closeSkillsModal()" title="Close dialog">✕</button>
+                    </div>
+                </div>
+                <div class="skills-subtitle">Intelligent heating features running locally on your LAN without cloud subscriptions.</div>
+            </div>
+
+            <div class="skills-list" id="skills-list" style="margin-top:16px;">
+                <div class="loading">Loading skills...</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal -->
     <div class="modal" id="modal">
         <div class="modal-content">
@@ -1883,6 +2100,7 @@
             <div class="tabs">
                 <button class="tab-button active" data-tab="controls">Controls</button>
                 <button class="tab-button" data-tab="schedule">📅 Schedule</button>
+                <button class="tab-button" data-tab="skills">⚡ Skills</button>
                 <button class="tab-button" data-tab="history">History</button>
             </div>
 
@@ -1985,6 +2203,60 @@
                 </div>
             </div>
 
+            <!-- Skills Tab -->
+            <div class="tab-content" id="tab-skills" style="display: none;">
+                <div class="skills-zone-box">
+                    <div class="skills-zone-card">
+                        <div class="skills-zone-header">
+                            <div>
+                                <h3 style="margin:0; font-size:15px;">🪟 Open Window Detection</h3>
+                                <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Automatically pauses heating when a window is opened.</div>
+                            </div>
+                            <span id="zone-window-status-pill" class="pill-badge">Closed</span>
+                        </div>
+                        <div style="margin-top:12px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                            <label style="font-size:13px; color:var(--text-primary);">Pause Heating Duration:</label>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <select id="zone-window-duration" class="skill-config-select">
+                                    <option value="15">15 minutes</option>
+                                    <option value="30">30 minutes</option>
+                                    <option value="45">45 minutes</option>
+                                    <option value="60">60 minutes</option>
+                                </select>
+                                <button class="btn btn-secondary btn-sm" onclick="saveZoneWindowTimeout()">Save</button>
+                            </div>
+                        </div>
+                        <div id="zone-window-alert-row" style="display:none; margin-top:10px; background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.3); border-radius:8px; padding:8px 12px; justify-content:space-between; align-items:center;">
+                            <span style="font-size:12.5px; color:#ef4444; font-weight:600;">🪟 Window Open active: Heating is paused</span>
+                            <button class="btn btn-primary btn-sm" onclick="cancelWindowOpen(currentZone.zone_id)">Resume Heating</button>
+                        </div>
+                    </div>
+
+                    <div class="skills-zone-card" style="margin-top:12px;">
+                        <div class="skills-zone-header">
+                            <div>
+                                <h3 style="margin:0; font-size:15px;">🍃 Air Comfort & Mold Risk</h3>
+                                <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Live indoor climate and condensation monitoring.</div>
+                            </div>
+                            <span id="zone-mold-risk-pill" class="pill-badge">Optimal</span>
+                        </div>
+                        <div style="margin-top:12px; display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <div style="background:var(--bg-primary); padding:10px; border-radius:8px; text-align:center;">
+                                <div style="font-size:11px; color:var(--text-secondary);">Relative Humidity</div>
+                                <div id="zone-skill-humidity" style="font-size:18px; font-weight:700; color:var(--text-primary); margin-top:2px;">--%</div>
+                            </div>
+                            <div style="background:var(--bg-primary); padding:10px; border-radius:8px; text-align:center;">
+                                <div style="font-size:11px; color:var(--text-secondary);">Dew Point</div>
+                                <div id="zone-skill-dewpoint" style="font-size:18px; font-weight:700; color:var(--text-primary); margin-top:2px;">--°</div>
+                            </div>
+                        </div>
+                        <div id="zone-mold-advice" style="font-size:12.5px; color:var(--text-secondary); margin-top:10px;">
+                            Calculating indoor climate data...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- History Tab -->
             <div class="tab-content" id="tab-history" style="display: none;">
                 <div class="history-controls">
@@ -2000,6 +2272,28 @@
                 </div>
                 <div id="history-loading" class="loading" style="display: none;">Loading history...</div>
                 <div id="history-error" class="history-error" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skills Manager Modal -->
+    <div class="modal" id="skills-modal" style="display: none;">
+        <div class="modal-content skills-modal-content">
+            <div class="modal-header">
+                <div class="modal-header-top">
+                    <div class="modal-title-wrap">
+                        <h2 class="modal-title">⚡ Tado Skills & Automation</h2>
+                        <span class="modal-current-badge">Offline & Local</span>
+                    </div>
+                    <div class="modal-header-actions">
+                        <button class="modal-close-btn" onclick="closeSkillsModal()" title="Close dialog">✕</button>
+                    </div>
+                </div>
+                <div class="skills-subtitle">Intelligent heating features running locally on your LAN without cloud subscriptions.</div>
+            </div>
+
+            <div class="skills-list" id="skills-list" style="margin-top:16px;">
+                <div class="loading">Loading skills...</div>
             </div>
         </div>
     </div>
@@ -2364,6 +2658,10 @@
                 
                 const data = await zonesRes.json();
                 zones = data.zones || [];
+                if (data.away_mode) {
+                    currentAwayStatus = data.away_mode;
+                    updateAwayButton(currentAwayStatus);
+                }
 
                 if (devRes && devRes.ok) {
                     try {
@@ -2600,6 +2898,14 @@
                     ? `<span class="pill-badge pill-badge-schedule" title="Local Schedule Engine active (overrules Tado App)">📅 Local</span>` 
                     : '';
 
+                const windowAlertBadge = zone.open_window_active
+                    ? `<span class="pill-badge pill-badge-window-alert" onclick="event.stopPropagation(); cancelWindowOpen(${zone.zone_id})" title="Window Open detected - heating paused! Click to resume heating">🪟 Paused ${zone.open_window_remaining ? Math.ceil(zone.open_window_remaining / 60) + 'm' : ''} ✕</span>`
+                    : '';
+
+                const awayBadge = (currentAwayStatus && currentAwayStatus.is_away)
+                    ? `<span class="pill-badge pill-badge-away" title="Away Mode active (${currentAwayStatus.away_temp}°C)">🚶 Away</span>`
+                    : '';
+
                 return `
                     <div class="${cardClass}" data-zone-id="${zone.zone_id}" onclick="openZoneModal(${zone.zone_id})">
                         <div class="zone-card-header">
@@ -2614,6 +2920,8 @@
                         <div class="zone-pills-row">
                             ${statusBadge}
                             ${scheduleBadge}
+                            ${windowAlertBadge}
+                            ${awayBadge}
                             ${humidityBadge}
                             ${windowBadge}
                             ${batteryBadge}
@@ -2633,6 +2941,9 @@
             document.getElementById('modal-zone-name').textContent = currentZone.name;
             document.getElementById('modal-current-temp').textContent = 
                 `${state.cur_temp_c !== null && state.cur_temp_c !== undefined ? state.cur_temp_c.toFixed(1) : '--'}°`;
+            
+            // Populate zone skills tab
+            updateZoneSkillsTab(currentZone);
             
             // Show battery warning if needed
             const batteryWarning = document.getElementById('modal-battery-warning');
@@ -3403,6 +3714,340 @@
 
         const btnCopySchedule = document.getElementById('btn-copy-schedule');
         if (btnCopySchedule) btnCopySchedule.addEventListener('click', copyScheduleToAllDays);
+
+        // =====================================================================
+        // Skills & Automation Frontend
+        // =====================================================================
+        let currentAwayStatus = { is_away: false, away_temp: 16.0 };
+        let allSkillsData = {};
+
+        function updateAwayButton(awayStatus) {
+            const btn = document.getElementById('away-toggle-btn');
+            const icon = document.getElementById('away-toggle-icon');
+            const txt = document.getElementById('away-toggle-text');
+            if (!btn || !icon || !txt) return;
+
+            if (awayStatus && awayStatus.is_away) {
+                btn.classList.add('is-away');
+                icon.textContent = '🚶';
+                txt.textContent = `Away (${awayStatus.away_temp || 16}°)`;
+            } else {
+                btn.classList.remove('is-away');
+                icon.textContent = '🏠';
+                txt.textContent = 'Home';
+            }
+        }
+
+        async function toggleAwayMode() {
+            const isAway = !(currentAwayStatus && currentAwayStatus.is_away);
+            try {
+                const res = await fetch('/api/skills/away', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_away: isAway })
+                });
+                if (res.ok) {
+                    currentAwayStatus = await res.json();
+                    updateAwayButton(currentAwayStatus);
+                    showSuccess(isAway ? '🚶 Away Mode active: all zones set to eco temperature' : '🏠 Home Mode: normal temperatures resumed');
+                    setTimeout(loadZones, 500);
+                } else {
+                    const err = await res.json();
+                    showError(err.detail || 'Failed to toggle Away mode');
+                }
+            } catch (e) {
+                showError('Error setting Away mode: ' + e.message);
+            }
+        }
+
+        async function cancelWindowOpen(zoneId) {
+            try {
+                const res = await fetch(`/api/skills/open_window/${zoneId}/cancel`, { method: 'POST' });
+                if (res.ok) {
+                    showSuccess('Heating resumed for zone');
+                    setTimeout(loadZones, 500);
+                }
+            } catch (e) {
+                showError('Could not cancel open window: ' + e.message);
+            }
+        }
+
+        async function openSkillsModal() {
+            const modal = document.getElementById('skills-modal');
+            modal.style.display = 'flex';
+            await loadSkillsData();
+        }
+
+        function closeSkillsModal() {
+            document.getElementById('skills-modal').style.display = 'none';
+        }
+
+        document.getElementById('skills-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'skills-modal') closeSkillsModal();
+        });
+
+        async function loadSkillsData() {
+            const listEl = document.getElementById('skills-list');
+            listEl.innerHTML = '<div class="loading">Loading skills and diagnostics...</div>';
+            try {
+                const [skillsRes, diagRes, winRes, comfortRes] = await Promise.all([
+                    fetch('/api/skills').then(r => r.json()),
+                    fetch('/api/skills/diagnostics').then(r => r.json()).catch(() => ({ anomalies: [], low_batteries: [] })),
+                    fetch('/api/skills/open_window').then(r => r.json()).catch(() => ({ active_windows: {} })),
+                    fetch('/api/skills/air_comfort').then(r => r.json()).catch(() => ({ air_comfort: {} }))
+                ]);
+
+                allSkillsData = skillsRes.skills || {};
+                renderSkillsList(allSkillsData, diagRes, winRes.active_windows || {}, comfortRes.air_comfort || {});
+            } catch (e) {
+                listEl.innerHTML = `<div class="history-error">Error loading skills: ${e.message}</div>`;
+            }
+        }
+
+        function renderSkillsList(skills, diag, activeWindows, airComfort) {
+            const listEl = document.getElementById('skills-list');
+            const keys = ['open_window', 'away_mode', 'early_start', 'air_comfort', 'care_protect'];
+            
+            listEl.innerHTML = keys.map(k => {
+                const s = skills[k];
+                if (!s) return '';
+                const enabled = !!s.enabled;
+                const cfg = s.config || {};
+                
+                let extraHtml = '';
+                if (k === 'open_window') {
+                    const activeCount = Object.keys(activeWindows).length;
+                    const activeAlert = activeCount > 0 
+                        ? `<div class="diag-item warning" style="margin-top:10px;">
+                            <span>⚠️ <strong>${activeCount} room(s) currently open:</strong> Heating paused.</span>
+                           </div>` 
+                        : '';
+                    extraHtml = `
+                        <div class="skill-config-body">
+                            <div class="skill-config-row">
+                                <span>Pause Duration:</span>
+                                <select class="skill-config-select" onchange="updateSkillConfigParam('${k}', 'default_open_duration', parseInt(this.value, 10))">
+                                    <option value="15" ${cfg.default_open_duration === 15 ? 'selected' : ''}>15 minutes</option>
+                                    <option value="30" ${cfg.default_open_duration === 30 ? 'selected' : ''}>30 minutes</option>
+                                    <option value="45" ${cfg.default_open_duration === 45 ? 'selected' : ''}>45 minutes</option>
+                                    <option value="60" ${cfg.default_open_duration === 60 ? 'selected' : ''}>60 minutes</option>
+                                </select>
+                            </div>
+                            <div class="skill-config-row">
+                                <span>Action when window opens:</span>
+                                <select class="skill-config-select" onchange="updateSkillConfigParam('${k}', 'action', this.value)">
+                                    <option value="frost_protect" ${cfg.action === 'frost_protect' ? 'selected' : ''}>Frost Protect (5°C)</option>
+                                    <option value="turn_off" ${cfg.action === 'turn_off' ? 'selected' : ''}>Turn Off Heating</option>
+                                </select>
+                            </div>
+                            <div class="skill-config-row">
+                                <span>Sensitivity (Temp Drop):</span>
+                                <select class="skill-config-select" onchange="updateSkillConfigParam('${k}', 'temp_drop_threshold', parseFloat(this.value))">
+                                    <option value="0.5" ${cfg.temp_drop_threshold === 0.5 ? 'selected' : ''}>0.5°C (High sensitivity)</option>
+                                    <option value="1.0" ${cfg.temp_drop_threshold === 1.0 ? 'selected' : ''}>1.0°C (Standard)</option>
+                                    <option value="1.5" ${cfg.temp_drop_threshold === 1.5 ? 'selected' : ''}>1.5°C (Low sensitivity)</option>
+                                </select>
+                            </div>
+                            ${activeAlert}
+                        </div>
+                    `;
+                } else if (k === 'away_mode') {
+                    extraHtml = `
+                        <div class="skill-config-body">
+                            <div class="skill-config-row">
+                                <span>Current Status:</span>
+                                <div>
+                                    <button class="btn btn-sm ${cfg.is_away ? 'btn-primary' : 'btn-secondary'}" onclick="toggleAwayMode()">${cfg.is_away ? '🚶 Away Mode Active' : '🏠 Home Mode Active'}</button>
+                                </div>
+                            </div>
+                            <div class="skill-config-row">
+                                <span>Away Eco Temperature:</span>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <input type="number" step="0.5" min="5" max="25" value="${cfg.away_temp || 16.0}" class="skill-config-input" onchange="updateSkillConfigParam('${k}', 'away_temp', parseFloat(this.value))">
+                                    <span>°C</span>
+                                </div>
+                            </div>
+                            <div style="font-size:11.5px; color:var(--text-secondary); margin-top:4px;">
+                                💡 Tip: Home Assistant or smart automations can trigger Away Mode via <code>POST /api/skills/away</code>.
+                            </div>
+                        </div>
+                    `;
+                } else if (k === 'early_start') {
+                    extraHtml = `
+                        <div class="skill-config-body">
+                            <div class="skill-config-row">
+                                <span>Preheat Lookahead:</span>
+                                <select class="skill-config-select" onchange="updateSkillConfigParam('${k}', 'lookahead_minutes', parseInt(this.value, 10))">
+                                    <option value="15" ${cfg.lookahead_minutes === 15 ? 'selected' : ''}>15 minutes</option>
+                                    <option value="30" ${cfg.lookahead_minutes === 30 ? 'selected' : ''}>30 minutes (Recommended)</option>
+                                    <option value="45" ${cfg.lookahead_minutes === 45 ? 'selected' : ''}>45 minutes</option>
+                                    <option value="60" ${cfg.lookahead_minutes === 60 ? 'selected' : ''}>60 minutes</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                } else if (k === 'air_comfort') {
+                    const roomList = Object.values(airComfort).map(r => `
+                        <div class="diag-item ${r.mold_risk === 'high' ? 'danger' : (r.mold_risk === 'moderate' ? 'warning' : '')}">
+                            <div><strong>${r.zone_name || 'Room'}:</strong> ${r.humidity !== null ? r.humidity + '%' : '--'} humidity, dew point ${r.dew_point !== null ? r.dew_point + '°' : '--'}</div>
+                            <span class="pill-badge">${r.mold_risk_label || 'Optimal'}</span>
+                        </div>
+                    `).join('');
+                    extraHtml = `
+                        <div class="skill-config-body">
+                            <div style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:4px;">Room Climate & Mold Risk Overview:</div>
+                            ${roomList || '<div style="font-size:12px; color:var(--text-secondary);">No room sensor data available.</div>'}
+                        </div>
+                    `;
+                } else if (k === 'care_protect') {
+                    const issues = (diag.anomalies || []).map(a => `
+                        <div class="diag-item ${a.issue && a.issue.includes('Heating') ? 'danger' : 'warning'}">
+                            <div><strong>${a.zone_name || a.name || 'System'}:</strong> ${a.issue}</div>
+                        </div>
+                    `).join('');
+                    extraHtml = `
+                        <div class="skill-config-body">
+                            <div style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:4px;">Heating & Battery Diagnostics:</div>
+                            ${issues || '<div class="diag-item" style="color:#10b981;">✓ All heating circuits and batteries operating normally.</div>'}
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="skill-card">
+                        <div class="skill-card-header">
+                            <div class="skill-card-title-wrap">
+                                <span class="skill-icon">${s.icon || '⚡'}</span>
+                                <div>
+                                    <div class="skill-name">${s.name}</div>
+                                </div>
+                            </div>
+                            <label class="switch-toggle-label">
+                                <input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleSkill('${k}', this.checked)">
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <div class="skill-desc">${s.description}</div>
+                        ${extraHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function toggleSkill(skillId, enabled) {
+            try {
+                const res = await fetch(`/api/skills/${skillId}/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled })
+                });
+                if (res.ok) {
+                    showSuccess(`Skill '${skillId}' ${enabled ? 'enabled' : 'disabled'}`);
+                    loadSkillsData();
+                    setTimeout(loadZones, 500);
+                }
+            } catch (e) {
+                showError(`Failed to toggle skill: ${e.message}`);
+            }
+        }
+
+        async function updateSkillConfigParam(skillId, key, value) {
+            try {
+                const updates = {};
+                updates[key] = value;
+                const res = await fetch(`/api/skills/${skillId}/config`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ config: updates })
+                });
+                if (res.ok) {
+                    showSuccess('Skill settings updated');
+                }
+            } catch (e) {
+                showError('Failed to update skill setting: ' + e.message);
+            }
+        }
+
+        function updateZoneSkillsTab(zone) {
+            if (!zone) return;
+            const state = zone.state || {};
+            const hum = state.hum_perc;
+            const temp = state.cur_temp_c;
+            const dewPoint = calculateDewPoint(temp, hum);
+
+            // Open window section
+            const windowPill = document.getElementById('zone-window-status-pill');
+            const windowAlertRow = document.getElementById('zone-window-alert-row');
+            const windowDurationSelect = document.getElementById('zone-window-duration');
+
+            if (zone.window_open_time && windowDurationSelect) {
+                windowDurationSelect.value = String(zone.window_open_time);
+            }
+
+            if (zone.open_window_active) {
+                if (windowPill) {
+                    windowPill.className = 'pill-badge pill-badge-window-alert';
+                    windowPill.textContent = '🪟 Window Open (Paused)';
+                }
+                if (windowAlertRow) windowAlertRow.style.display = 'flex';
+            } else {
+                if (windowPill) {
+                    windowPill.className = 'pill-badge';
+                    windowPill.textContent = 'Closed';
+                }
+                if (windowAlertRow) windowAlertRow.style.display = 'none';
+            }
+
+            // Air comfort section
+            const humEl = document.getElementById('zone-skill-humidity');
+            const dewEl = document.getElementById('zone-skill-dewpoint');
+            const moldPill = document.getElementById('zone-mold-risk-pill');
+            const adviceEl = document.getElementById('zone-mold-advice');
+
+            if (humEl) humEl.textContent = hum !== null && hum !== undefined ? `${hum}%` : '--%';
+            if (dewEl) dewEl.textContent = dewPoint !== null ? `${dewPoint}°` : '--°';
+
+            if (moldPill && adviceEl) {
+                if (hum === null || hum === undefined) {
+                    moldPill.className = 'pill-badge';
+                    moldPill.textContent = 'Unknown';
+                    adviceEl.textContent = 'Humidity sensor data not available for this room.';
+                } else if (hum >= 70) {
+                    moldPill.className = 'pill-badge pill-badge-window-alert';
+                    moldPill.textContent = 'High Mold Risk';
+                    adviceEl.textContent = '⚠️ Humidity is over 70%. High condensation and mold risk. Open windows to air out.';
+                } else if (hum >= 60) {
+                    moldPill.className = 'pill-badge';
+                    moldPill.style.color = '#f59e0b';
+                    moldPill.textContent = 'Elevated Humidity';
+                    adviceEl.textContent = 'Humidity is elevated (60-70%). Consider ventilating the room soon.';
+                } else if (hum < 30) {
+                    moldPill.className = 'pill-badge';
+                    moldPill.textContent = 'Dry Air';
+                    adviceEl.textContent = 'Air is very dry (<30%). Humidification recommended for comfort.';
+                } else {
+                    moldPill.className = 'pill-badge';
+                    moldPill.style.color = '#10b981';
+                    moldPill.textContent = 'Optimal';
+                    adviceEl.textContent = 'Indoor humidity and temperature are within ideal comfort ranges.';
+                }
+            }
+        }
+
+        async function saveZoneWindowTimeout() {
+            if (!currentZone) return;
+            const select = document.getElementById('zone-window-duration');
+            const val = parseInt(select.value, 10);
+            try {
+                const res = await fetch(`/zones/${currentZone.zone_id}/windowtimeouts?window_open_time=${val}`, { method: 'POST' });
+                if (res.ok) {
+                    currentZone.window_open_time = val;
+                    showSuccess(`Pause duration saved: ${val} minutes`);
+                }
+            } catch (e) {
+                showError('Failed saving window timeout: ' + e.message);
+            }
+        }
 
         // Initialize
         loadZones();

@@ -134,6 +134,19 @@ class ScheduleToggleRequest(BaseModel):
     enabled: bool
 
 
+class SkillToggleRequest(BaseModel):
+    enabled: bool
+
+
+class SkillConfigRequest(BaseModel):
+    config: Dict[str, Any]
+
+
+class AwayModeRequest(BaseModel):
+    is_away: bool
+    away_temp: Optional[float] = None
+
+
 def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=None):
     """Register all API routes.
 
@@ -524,6 +537,26 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
             except Exception as e:
                 logger.debug(f"Could not fetch schedule summary: {e}")
 
+        # Fetch skills status if available
+        skills = getattr(tado_api, 'skills_manager', None)
+        away_status = None
+        open_windows = {}
+        if skills:
+            if hasattr(skills, 'get_away_status'):
+                try:
+                    res = skills.get_away_status()
+                    if isinstance(res, dict):
+                        away_status = res
+                except Exception:
+                    pass
+            if hasattr(skills, 'get_open_window_status'):
+                try:
+                    res = skills.get_open_window_status()
+                    if isinstance(res, dict):
+                        open_windows = res
+                except Exception:
+                    pass
+
         # Use cached zone info (no DB query)
         # Sort by order_id (treating None as 999, but 0 is valid), then by name
         for zone_id, zone_info in sorted(
@@ -639,6 +672,8 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
                 'min_temp': MIN_TARGET_TEMPERATURE,
                 'max_temp': MAX_TARGET_TEMPERATURE,
                 'local_schedule_enabled': bool(sched_summary.get(zone_id, {}).get('enabled', False)) if isinstance(sched_summary, dict) and isinstance(sched_summary.get(zone_id), dict) else False,
+                'open_window_active': bool(open_windows.get(zone_id)) if isinstance(open_windows, dict) else False,
+                'open_window_remaining': open_windows.get(zone_id, {}).get('remaining_seconds') if isinstance(open_windows, dict) and isinstance(open_windows.get(zone_id), dict) else None,
                 'state': state_summary
             })
 
@@ -671,7 +706,8 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
         return {
             'homes': homes,
             'zones': zones,
-            'count': len(zones)
+            'count': len(zones),
+            'away_mode': away_status
         }
 
     @app.post("/zones/set", tags=["Zones"])
@@ -1521,6 +1557,146 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
             return scheduler.get_all_schedules()
         except Exception as e:
             logger.error(f"Error getting all schedules: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    # -------------------------------------------------------------------------
+    # Skills Endpoints
+    # -------------------------------------------------------------------------
+
+    @app.get("/api/skills", tags=["Skills"])
+    async def get_skills_list(api_key: Optional[str] = Depends(get_api_key)):
+        """Get status and configuration of all local Tado skills."""
+        tado_api = get_tado_api()
+        skills = getattr(tado_api, 'skills_manager', None)
+        if not skills:
+            raise HTTPException(status_code=503, detail="Skills manager not available")
+        try:
+            return {"skills": skills.get_skills()}
+        except Exception as e:
+            logger.error(f"Error getting skills: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/api/skills/{skill_id}/toggle", tags=["Skills"])
+    async def toggle_skill(
+        skill_id: str,
+        request: SkillToggleRequest,
+        api_key: Optional[str] = Depends(get_api_key)
+    ):
+        """Toggle a skill on or off globally."""
+        tado_api = get_tado_api()
+        skills = getattr(tado_api, 'skills_manager', None)
+        if not skills:
+            raise HTTPException(status_code=503, detail="Skills manager not available")
+        try:
+            return skills.set_skill_enabled(skill_id, request.enabled)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            logger.error(f"Error toggling skill {skill_id}: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/api/skills/{skill_id}/config", tags=["Skills"])
+    async def update_skill_config(
+        skill_id: str,
+        request: SkillConfigRequest,
+        api_key: Optional[str] = Depends(get_api_key)
+    ):
+        """Update configuration parameters for a skill."""
+        tado_api = get_tado_api()
+        skills = getattr(tado_api, 'skills_manager', None)
+        if not skills:
+            raise HTTPException(status_code=503, detail="Skills manager not available")
+        try:
+            return skills.update_skill_config(skill_id, request.config)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            logger.error(f"Error updating skill config {skill_id}: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/skills/away", tags=["Skills"])
+    async def get_away_mode(api_key: Optional[str] = Depends(get_api_key)):
+        """Get current Away Mode status."""
+        tado_api = get_tado_api()
+        skills = getattr(tado_api, 'skills_manager', None)
+        if not skills:
+            raise HTTPException(status_code=503, detail="Skills manager not available")
+        try:
+            return skills.get_away_status()
+        except Exception as e:
+            logger.error(f"Error getting away status: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/api/skills/away", tags=["Skills"])
+    async def set_away_mode(
+        request: AwayModeRequest,
+        api_key: Optional[str] = Depends(get_api_key)
+    ):
+        """Activate or deactivate Away Mode across all zones."""
+        tado_api = get_tado_api()
+        skills = getattr(tado_api, 'skills_manager', None)
+        if not skills:
+            raise HTTPException(status_code=503, detail="Skills manager not available")
+        try:
+            return await skills.set_away_mode(request.is_away, request.away_temp)
+        except Exception as e:
+            logger.error(f"Error setting away mode: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/skills/open_window", tags=["Skills"])
+    async def get_active_open_windows(api_key: Optional[str] = Depends(get_api_key)):
+        """Get all currently active open windows."""
+        tado_api = get_tado_api()
+        skills = getattr(tado_api, 'skills_manager', None)
+        if not skills:
+            raise HTTPException(status_code=503, detail="Skills manager not available")
+        try:
+            return {"active_windows": skills.get_open_window_status()}
+        except Exception as e:
+            logger.error(f"Error getting open windows: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/api/skills/open_window/{zone_id}/cancel", tags=["Skills"])
+    async def cancel_zone_open_window(
+        zone_id: int,
+        api_key: Optional[str] = Depends(get_api_key)
+    ):
+        """Manually cancel open window mode and resume heating for a zone."""
+        tado_api = get_tado_api()
+        skills = getattr(tado_api, 'skills_manager', None)
+        if not skills:
+            raise HTTPException(status_code=503, detail="Skills manager not available")
+        try:
+            await skills.restore_open_window(zone_id)
+            return {"zone_id": zone_id, "status": "restored"}
+        except Exception as e:
+            logger.error(f"Error cancelling open window for zone {zone_id}: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/skills/air_comfort", tags=["Skills"])
+    async def get_air_comfort(api_key: Optional[str] = Depends(get_api_key)):
+        """Get air comfort and mold risk analysis for all zones."""
+        tado_api = get_tado_api()
+        skills = getattr(tado_api, 'skills_manager', None)
+        if not skills:
+            raise HTTPException(status_code=503, detail="Skills manager not available")
+        try:
+            return {"air_comfort": skills.get_all_air_comfort()}
+        except Exception as e:
+            logger.error(f"Error getting air comfort: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/skills/diagnostics", tags=["Skills"])
+    async def get_care_protect_diagnostics(api_key: Optional[str] = Depends(get_api_key)):
+        """Get Care & Protect system diagnostics (heating anomalies and battery states)."""
+        tado_api = get_tado_api()
+        skills = getattr(tado_api, 'skills_manager', None)
+        if not skills:
+            raise HTTPException(status_code=503, detail="Skills manager not available")
+        try:
+            return skills.get_diagnostics()
+        except Exception as e:
+            logger.error(f"Error getting diagnostics: {e}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get("/devices", tags=["Devices"])
