@@ -19,6 +19,7 @@ This project is a modernized, extended fork of [AmpScm/TadoLocal](https://github
 All foundational HomeKit reverse-engineering, local protocol communication, and initial architecture originate from AmpScm's initial project. We are deeply grateful to Bert Huijben and the contributors who paved the way for local Tado control.
 
 ### 🚀 Key Improvements & Features Added in this Version:
+- 📅 **Local Schedule Engine & Cloud Overrule**: Create custom weekly heating schedules directly in the web UI without sending schedule data to Tado Cloud. Overrule Tado Cloud schedules per-zone with a single toggle, running 100% locally on your LAN.
 - 📱 **Modern Streamlined Web UI**: A clean, compact 2-column modal interface that fits target temperature, presets, active heating state, battery badges, and device serials on a single screen (~360px) without scrolling.
 - 💡 **Identify / Blink Display**: Physical visual verification of radiator thermostats (VAxxx) via LED blinking — available through REST endpoints (`/devices/{id}/identify`, `/zones/{id}/identify`) and UI "Blink" buttons.
 - ⚡ **Zero-Block Startup**: Eliminates upstream container startup freezes when bridge IP is not pre-configured, allowing effortless web-based discovery and pairing.

@@ -118,6 +118,22 @@ class PairingRequest(BaseModel):
     pin: str = Field(min_length=9, max_length=11)
 
 
+class ScheduleBlockModel(BaseModel):
+    id: Optional[int] = None
+    day_of_week: int = Field(default=-1, ge=-1, le=6)
+    start_time: str = Field(min_length=3, max_length=5)
+    target_temperature: float = Field(ge=MIN_TARGET_TEMPERATURE, le=MAX_TARGET_TEMPERATURE)
+
+
+class ScheduleSaveRequest(BaseModel):
+    enabled: Optional[bool] = None
+    blocks: List[ScheduleBlockModel] = []
+
+
+class ScheduleToggleRequest(BaseModel):
+    enabled: bool
+
+
 def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=None):
     """Register all API routes.
 
@@ -497,6 +513,14 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
 
         zones = []
 
+        # Fetch local schedule statuses for all zones
+        sched_summary = {}
+        if hasattr(tado_api, 'scheduler') and tado_api.scheduler:
+            try:
+                sched_summary = tado_api.scheduler.get_all_schedules()
+            except Exception as e:
+                logger.debug(f"Could not fetch schedule summary: {e}")
+
         # Use cached zone info (no DB query)
         # Sort by order_id (treating None as 999, but 0 is valid), then by name
         for zone_id, zone_info in sorted(
@@ -611,6 +635,7 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
                 'window_rest_time': window_rest_time,
                 'min_temp': MIN_TARGET_TEMPERATURE,
                 'max_temp': MAX_TARGET_TEMPERATURE,
+                'local_schedule_enabled': sched_summary.get(zone_id, {}).get('enabled', False),
                 'state': state_summary
             })
 
@@ -956,6 +981,13 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
                 'window_open': None,
             }
 
+        is_sched_enabled = False
+        if hasattr(tado_api, 'scheduler') and tado_api.scheduler:
+            try:
+                is_sched_enabled = tado_api.scheduler.get_zone_schedule(zone_id).get('enabled', False)
+            except Exception as e:
+                logger.debug(f"Could not fetch schedule for zone {zone_id}: {e}")
+
         zone = {
             'zone_id': zone_id,
             'name': name,
@@ -972,6 +1004,7 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
             'window_rest_time': window_rest_time,
             'min_temp': MIN_TARGET_TEMPERATURE,
             'max_temp': MAX_TARGET_TEMPERATURE,
+            'local_schedule_enabled': is_sched_enabled,
             'state': state_summary
         }
 
@@ -1406,6 +1439,70 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
             return {"status": "ok", "zone_id": zone_id, "devices": results}
         except Exception as e:
             logger.error(f"Error identifying zone {zone_id}: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/zones/{zone_id}/schedule", tags=["Schedules"])
+    async def get_zone_schedule(zone_id: int, api_key: Optional[str] = Depends(get_api_key)):
+        """Get local schedule configuration and blocks for a zone."""
+        tado_api = get_tado_api()
+        if not tado_api:
+            raise HTTPException(status_code=503, detail="API not initialized")
+        try:
+            return tado_api.scheduler.get_zone_schedule(zone_id)
+        except Exception as e:
+            logger.error(f"Error getting schedule for zone {zone_id}: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/zones/{zone_id}/schedule", tags=["Schedules"])
+    async def save_zone_schedule(
+        zone_id: int,
+        request: ScheduleSaveRequest,
+        api_key: Optional[str] = Depends(get_api_key)
+    ):
+        """Save local schedule blocks and/or enabled state for a zone."""
+        tado_api = get_tado_api()
+        if not tado_api:
+            raise HTTPException(status_code=503, detail="API not initialized")
+        try:
+            blocks = [b.dict() for b in request.blocks]
+            result = tado_api.scheduler.save_zone_schedule(zone_id, blocks, enabled=request.enabled)
+            # If enabled, evaluate immediately so changes take effect
+            if result.get("enabled"):
+                await tado_api.scheduler.evaluate_zone(zone_id, force=True)
+            return result
+        except Exception as e:
+            logger.error(f"Error saving schedule for zone {zone_id}: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/zones/{zone_id}/schedule/toggle", tags=["Schedules"])
+    async def toggle_zone_schedule(
+        zone_id: int,
+        request: ScheduleToggleRequest,
+        api_key: Optional[str] = Depends(get_api_key)
+    ):
+        """Toggle local schedule overrule on/off for a zone."""
+        tado_api = get_tado_api()
+        if not tado_api:
+            raise HTTPException(status_code=503, detail="API not initialized")
+        try:
+            result = tado_api.scheduler.set_zone_enabled(zone_id, request.enabled)
+            if request.enabled:
+                await tado_api.scheduler.evaluate_zone(zone_id, force=True)
+            return result
+        except Exception as e:
+            logger.error(f"Error toggling schedule for zone {zone_id}: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/schedules", tags=["Schedules"])
+    async def get_all_schedules(api_key: Optional[str] = Depends(get_api_key)):
+        """Get summary of local schedules across all zones."""
+        tado_api = get_tado_api()
+        if not tado_api:
+            raise HTTPException(status_code=503, detail="API not initialized")
+        try:
+            return tado_api.scheduler.get_all_schedules()
+        except Exception as e:
+            logger.error(f"Error getting all schedules: {e}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get("/devices", tags=["Devices"])

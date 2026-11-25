@@ -159,6 +159,29 @@ CREATE TABLE IF NOT EXISTS tado_cloud_cache (
 CREATE INDEX IF NOT EXISTS idx_cloud_cache_expiry ON tado_cloud_cache(home_id, expires_at);
 """
 
+SCHEDULE_SCHEMA = """
+CREATE TABLE IF NOT EXISTS local_schedules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    zone_id INTEGER NOT NULL,
+    day_of_week INTEGER NOT NULL,
+    start_time TEXT NOT NULL,
+    target_temperature REAL NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (zone_id) REFERENCES zones(zone_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_schedules_zone ON local_schedules(zone_id, day_of_week, start_time);
+
+CREATE TABLE IF NOT EXISTS zone_schedule_config (
+    zone_id INTEGER PRIMARY KEY,
+    enabled BOOLEAN NOT NULL DEFAULT 0,
+    mode TEXT NOT NULL DEFAULT 'local',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (zone_id) REFERENCES zones(zone_id) ON DELETE CASCADE
+);
+"""
+
 
 def ensure_schema_and_migrate(db_path: str):
     """Ensure all schemas exist and run DB migrations using PRAGMA user_version.
@@ -172,7 +195,7 @@ def ensure_schema_and_migrate(db_path: str):
     # Supported schema version for this codebase. If the database reports a
     # higher user_version we should refuse to start to avoid silent data loss
     # or incompatible assumptions.
-    SUPPORTED_SCHEMA_VERSION = 3
+    SUPPORTED_SCHEMA_VERSION = 4
 
     # Open connection and check current schema version before applying changes
     conn = sqlite3.connect(db_path)
@@ -201,6 +224,7 @@ def ensure_schema_and_migrate(db_path: str):
     _apply_script_tolerant(conn, DB_SCHEMA)
     _apply_script_tolerant(conn, HOMEKIT_SCHEMA)
     _apply_script_tolerant(conn, CLOUD_SCHEMA)
+    _apply_script_tolerant(conn, SCHEDULE_SCHEMA)
 
     cursor = conn.execute("PRAGMA user_version")
     row = cursor.fetchone()
@@ -261,15 +285,29 @@ def ensure_schema_and_migrate(db_path: str):
             except Exception:
                 pass
             raise
-        finally:
-            conn.close()
-    else:
-        conn.close()
+
+    # Migration to version 4: local schedule engine tables
+    if current_version < 4:
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            _apply_script_tolerant(conn, SCHEDULE_SCHEMA)
+            conn.execute("PRAGMA user_version = 4")
+            current_version = 4
+            conn.commit()
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+
+    conn.close()
 
     # Ensure all schema scripts applied now that migrations are done
     conn = sqlite3.connect(db_path)
     _apply_script_tolerant(conn, DB_SCHEMA)
     _apply_script_tolerant(conn, HOMEKIT_SCHEMA)
     _apply_script_tolerant(conn, CLOUD_SCHEMA)
+    _apply_script_tolerant(conn, SCHEDULE_SCHEMA)
     conn.commit()
     conn.close()

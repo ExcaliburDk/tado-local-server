@@ -28,6 +28,7 @@ from aiohomekit.controller.ip.pairing import IpPairing
 
 from .state import DeviceStateManager
 from .homekit_uuids import get_characteristic_name
+from .scheduler import LocalScheduler
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -58,7 +59,9 @@ class TadoLocalAPI:
         self.last_update: Optional[float] = None
         self.device_states: Dict[str, Dict[str, Any]] = defaultdict(dict)
         self.last_zone_states: Dict[int, Dict[str, Any]] = {}  # Track zone states to deduplicate
+        self.db_path = db_path
         self.state_manager = DeviceStateManager(db_path)
+        self.scheduler = LocalScheduler(self, db_path)
         self.is_initializing = False  # Flag to suppress logging during startup
 
         # Cleanup tracking
@@ -77,6 +80,7 @@ class TadoLocalAPI:
         await self.initialize_device_states()
         self.is_initializing = False
         await self.setup_event_listeners()
+        await self.scheduler.start()
         n = 1 + len(self.extra_pairings)
         logger.info(f"Tado Local initialized successfully ({n} pairing{'s' if n > 1 else ''})")
 
@@ -84,6 +88,13 @@ class TadoLocalAPI:
         """Clean up resources and unsubscribe from events."""
         logger.info("Starting cleanup...")
         self.is_shutting_down = True
+
+        # Stop local scheduler
+        if hasattr(self, 'scheduler') and self.scheduler:
+            try:
+                await self.scheduler.stop()
+            except Exception as e:
+                logger.error(f"Error stopping scheduler: {e}")
 
         # Cancel window recheck tasks
         if self.window_close_timers:
@@ -1134,3 +1145,45 @@ class TadoLocalAPI:
                 logger.warning(f"Failed to identify device {dev_id}: {e}")
                 results[dev_id] = False
         return results
+
+    async def set_zone_temperature(self, zone_id: int, temperature: float, heating_enabled: bool = True) -> bool:
+        """
+        Set target temperature for a zone directly on its leader device via local HomeKit.
+        Used by the local scheduler and API endpoints without calling Tado Cloud.
+        """
+        if not self.pairing:
+            logger.warning(f"Cannot set zone {zone_id} temperature: bridge not connected")
+            return False
+
+        # Find leader device for the zone
+        leader_device_id = None
+        zone = self.state_manager.zone_cache.get(zone_id)
+        if zone:
+            leader_device_id = zone.get('leader_device_id')
+
+        if not leader_device_id:
+            # Fallback to the first device in this zone
+            devices = [d for d in self.state_manager.get_all_devices() if d.get('zone_id') == zone_id]
+            if devices:
+                leader_device_id = devices[0].get('device_id')
+
+        if not leader_device_id:
+            logger.warning(f"No device found in zone {zone_id} to set temperature")
+            return False
+
+        char_updates = {
+            'target_temperature': float(temperature),
+            'target_heating_cooling_state': 1 if heating_enabled else 0
+        }
+
+        # Apply optimistic state prediction for instant UI feedback
+        self.state_manager.set_optimistic_state(leader_device_id, char_updates)
+
+        try:
+            await self.set_device_characteristics(leader_device_id, char_updates)
+            logger.info(f"Successfully set zone {zone_id} temperature to {temperature}°C via device {leader_device_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed setting temperature on device {leader_device_id} for zone {zone_id}: {e}")
+            return False
+

@@ -1447,6 +1447,215 @@
             font-size: 11px;
             color: var(--text-muted);
         }
+
+        /* Schedule Tab & Badge Styling */
+        .pill-badge-schedule {
+            background: rgba(33, 150, 243, 0.14);
+            color: #1976d2;
+            border-color: rgba(33, 150, 243, 0.35);
+        }
+        [data-theme="dark"] .pill-badge-schedule {
+            background: rgba(33, 150, 243, 0.22);
+            color: #64b5f6;
+            border-color: rgba(100, 181, 246, 0.4);
+        }
+
+        .schedule-overrule-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: color-mix(in srgb, var(--accent) 8%, var(--bg-card));
+            border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border-light));
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 14px;
+            gap: 12px;
+        }
+        .schedule-overrule-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .schedule-overrule-title {
+            font-size: 14.5px;
+            font-weight: 650;
+            color: var(--text-primary);
+        }
+        .schedule-overrule-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        .switch-toggle-label {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .switch-toggle-label input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .switch-slider {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--bg-disabled);
+            border-radius: 24px;
+            transition: 0.25s;
+        }
+        .switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.25s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        input:checked + .switch-slider {
+            background-color: var(--accent);
+        }
+        input:checked + .switch-slider:before {
+            transform: translateX(20px);
+        }
+
+        .schedule-days-bar {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            margin-bottom: 14px;
+            padding-bottom: 4px;
+        }
+        .schedule-day-btn {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .schedule-day-btn:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+        .schedule-day-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .schedule-active-info {
+            background: color-mix(in srgb, #2196F3 12%, var(--bg-card));
+            border: 1px solid color-mix(in srgb, #2196F3 30%, transparent);
+            color: #1976d2;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12.5px;
+            margin-bottom: 12px;
+        }
+        [data-theme="dark"] .schedule-active-info {
+            color: #64b5f6;
+        }
+
+        .schedule-blocks-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 12px;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+        .schedule-blocks-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+        .schedule-block-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            gap: 12px;
+        }
+        .schedule-block-time {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .schedule-time-input {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text-primary);
+        }
+        .schedule-temp-control {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .schedule-temp-btn {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+        .schedule-temp-btn:hover {
+            border-color: var(--accent);
+        }
+        .schedule-temp-val {
+            font-size: 14px;
+            font-weight: 700;
+            min-width: 45px;
+            text-align: center;
+            color: var(--accent);
+        }
+        .schedule-block-delete {
+            background: transparent;
+            border: none;
+            color: var(--battery-low);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px 6px;
+            border-radius: 6px;
+        }
+        .schedule-block-delete:hover {
+            background: var(--bg-error);
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
     </style>
     <svg aria-hidden="true" style="display:none;" id="svgdefs" version="2" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -1673,6 +1882,7 @@
             <!-- Tabs -->
             <div class="tabs">
                 <button class="tab-button active" data-tab="controls">Controls</button>
+                <button class="tab-button" data-tab="schedule">📅 Schedule</button>
                 <button class="tab-button" data-tab="history">History</button>
             </div>
 
@@ -1719,6 +1929,59 @@
                 <div class="action-buttons">
                     <button class="btn btn-secondary" id="btn-cancel">Cancel</button>
                     <button class="btn btn-primary" id="btn-apply">Apply</button>
+                </div>
+            </div>
+
+            <!-- Schedule Tab -->
+            <div class="tab-content" id="tab-schedule" style="display: none;">
+                <!-- Overrule banner / toggle -->
+                <div class="schedule-overrule-box">
+                    <div class="schedule-overrule-left">
+                        <label class="switch-toggle-label">
+                            <input type="checkbox" id="schedule-enable-toggle" class="switch-checkbox">
+                            <span class="switch-slider"></span>
+                        </label>
+                        <div>
+                            <div class="schedule-overrule-title">Overrule Tado Cloud App (Brug lokal tidsplan)</div>
+                            <div class="schedule-overrule-desc">Styr opvarmningen 100% lokalt på LAN uden cloud. Tilsidesætter Tado appens tidsplan.</div>
+                        </div>
+                    </div>
+                    <span id="schedule-status-pill" class="pill-badge">Cloud Mode</span>
+                </div>
+
+                <!-- Day selector pills -->
+                <div class="schedule-days-bar" id="schedule-days-bar">
+                    <button class="schedule-day-btn active" data-day="-1" type="button">Alle dage</button>
+                    <button class="schedule-day-btn" data-day="0" type="button">Man</button>
+                    <button class="schedule-day-btn" data-day="1" type="button">Tirs</button>
+                    <button class="schedule-day-btn" data-day="2" type="button">Ons</button>
+                    <button class="schedule-day-btn" data-day="3" type="button">Tors</button>
+                    <button class="schedule-day-btn" data-day="4" type="button">Fre</button>
+                    <button class="schedule-day-btn" data-day="5" type="button">Lør</button>
+                    <button class="schedule-day-btn" data-day="6" type="button">Søn</button>
+                </div>
+
+                <!-- Current active block indicator -->
+                <div id="schedule-active-info" class="schedule-active-info" style="display: none;">
+                    Aktiv lige nu: <strong id="schedule-active-text">--</strong>
+                </div>
+
+                <!-- Time blocks table / list -->
+                <div class="schedule-blocks-container">
+                    <div class="schedule-blocks-header">
+                        <span id="schedule-day-title">Tidsrum for alle dage</span>
+                        <button class="btn btn-sm btn-secondary" id="btn-add-block" type="button">+ Tilføj tidsblok</button>
+                    </div>
+                    <div id="schedule-blocks-list" class="schedule-blocks-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="action-buttons" style="margin-top: 16px;">
+                    <button class="btn btn-secondary" id="btn-copy-schedule" type="button" title="Kopiér denne dags tidsplan til alle ugens dage">Kopiér til alle dage</button>
+                    <button class="btn btn-secondary" id="btn-apply-schedule-now" type="button" title="Gennemtving aktiv tidsblok nu">⚡ Aktivér nu</button>
+                    <button class="btn btn-primary" id="btn-save-schedule" type="button">Gem tidsplan</button>
                 </div>
             </div>
 
@@ -2333,6 +2596,10 @@
                     ? `<span class="pill-badge pill-badge-battery">🪫 Low battery</span>` 
                     : '';
 
+                const scheduleBadge = zone.local_schedule_enabled 
+                    ? `<span class="pill-badge pill-badge-schedule" title="Local Schedule Engine active (overrules Tado App)">📅 Local</span>` 
+                    : '';
+
                 return `
                     <div class="${cardClass}" data-zone-id="${zone.zone_id}" onclick="openZoneModal(${zone.zone_id})">
                         <div class="zone-card-header">
@@ -2346,6 +2613,7 @@
                         </div>
                         <div class="zone-pills-row">
                             ${statusBadge}
+                            ${scheduleBadge}
                             ${humidityBadge}
                             ${windowBadge}
                             ${batteryBadge}
@@ -2422,6 +2690,9 @@
                 content.style.display = 'none';
             });
             document.getElementById('tab-controls').style.display = 'block';
+
+            // Load local schedule for this zone
+            loadZoneSchedule(zoneId);
             
             document.getElementById('modal').classList.add('active');
         }
@@ -2836,6 +3107,302 @@
             document.getElementById('theme-toggle').textContent =
                 window.matchMedia('(prefers-color-scheme: dark)').matches ? '\u2600\uFE0F' : '\uD83C\uDF19';
         }
+
+        // ==========================================
+        // Local Schedule Engine Frontend Logic
+        // ==========================================
+        let currentSchedule = { enabled: false, blocks: [], active_block: null };
+        let selectedScheduleDay = -1; // -1 = Alle dage, 0 = Man .. 6 = Søn
+
+        const DAY_NAMES = {
+            '-1': 'Alle dage',
+            '0': 'Mandag',
+            '1': 'Tirsdag',
+            '2': 'Onsdag',
+            '3': 'Torsdag',
+            '4': 'Fredag',
+            '5': 'Lørdag',
+            '6': 'Søndag'
+        };
+
+        async function loadZoneSchedule(zoneId) {
+            try {
+                const response = await fetch(`/zones/${zoneId}/schedule`);
+                if (!response.ok) throw new Error('Kunne ikke hente tidsplan');
+                currentSchedule = await response.json();
+                
+                // Update overrule toggle
+                const toggle = document.getElementById('schedule-enable-toggle');
+                if (toggle) toggle.checked = !!currentSchedule.enabled;
+                
+                updateScheduleStatusPill();
+                updateActiveBlockInfo();
+                renderScheduleBlocks();
+            } catch (err) {
+                console.error('Fejl ved indlæsning af schedule:', err);
+            }
+        }
+
+        function updateScheduleStatusPill() {
+            const pill = document.getElementById('schedule-status-pill');
+            if (!pill) return;
+            if (currentSchedule.enabled) {
+                pill.className = 'pill-badge pill-badge-schedule';
+                pill.textContent = '⚡ Lokal overrule aktiv';
+            } else {
+                pill.className = 'pill-badge';
+                pill.textContent = 'Sky-tidsplan / Manuel';
+            }
+        }
+
+        function updateActiveBlockInfo() {
+            const infoBox = document.getElementById('schedule-active-info');
+            const textEl = document.getElementById('schedule-active-text');
+            if (!infoBox || !textEl) return;
+
+            if (currentSchedule.enabled && currentSchedule.active_block) {
+                const ab = currentSchedule.active_block;
+                const dayLabel = ab.day_of_week === -1 ? 'alle dage' : (DAY_NAMES[ab.day_of_week] || '');
+                textEl.textContent = `Kl. ${ab.start_time} (${ab.target_temperature}°C, ${dayLabel})`;
+                infoBox.style.display = 'block';
+            } else if (currentSchedule.enabled) {
+                textEl.textContent = 'Ingen aktiv blok defineret';
+                infoBox.style.display = 'block';
+            } else {
+                infoBox.style.display = 'none';
+            }
+        }
+
+        function renderScheduleBlocks() {
+            const listEl = document.getElementById('schedule-blocks-list');
+            const titleEl = document.getElementById('schedule-day-title');
+            if (!listEl) return;
+
+            if (titleEl) {
+                titleEl.textContent = `Tidsrum for: ${DAY_NAMES[selectedScheduleDay] || 'Valgt dag'}`;
+            }
+
+            // Filter blocks for selected day
+            const blocks = (currentSchedule.blocks || []).filter(b => b.day_of_week === selectedScheduleDay);
+            blocks.sort((a, b) => a.start_time.localeCompare(b.start_time));
+
+            if (blocks.length === 0) {
+                listEl.innerHTML = `
+                    <div style="font-size: 12.5px; color: var(--text-muted); text-align: center; padding: 20px;">
+                        Ingen tidsblokke oprettet for ${DAY_NAMES[selectedScheduleDay]}.<br>
+                        Klik <strong>+ Tilføj tidsblok</strong> ovenfor for at starte.
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = blocks.map((b, idx) => {
+                const identifier = (b.id !== undefined && b.id !== null) ? b.id : idx;
+                return `
+                    <div class="schedule-block-row">
+                        <div class="schedule-block-time">
+                            <span>⏰ Starter kl.</span>
+                            <input type="time" class="schedule-time-input" value="${b.start_time}" 
+                                   onchange="updateBlockTime(${identifier}, this.value)">
+                        </div>
+                        <div class="schedule-temp-control">
+                            <button type="button" class="schedule-temp-btn" onclick="adjustBlockTemp(${identifier}, -0.5)">−</button>
+                            <span class="schedule-temp-val">${Number(b.target_temperature).toFixed(1)}°</span>
+                            <button type="button" class="schedule-temp-btn" onclick="adjustBlockTemp(${identifier}, 0.5)">+</button>
+                            <button type="button" class="schedule-block-delete" onclick="removeScheduleBlock(${identifier})" title="Slet tidsblok">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function findBlock(identifier) {
+            return (currentSchedule.blocks || []).find((b, idx) => (b.id !== undefined && b.id !== null ? b.id === identifier : idx === identifier));
+        }
+
+        function updateBlockTime(identifier, newTime) {
+            const block = findBlock(identifier);
+            if (block && newTime) {
+                block.start_time = newTime;
+                renderScheduleBlocks();
+            }
+        }
+
+        function adjustBlockTemp(identifier, delta) {
+            const block = findBlock(identifier);
+            if (block) {
+                let newTemp = Math.round((Number(block.target_temperature) + delta) * 10) / 10;
+                newTemp = Math.max(5.0, Math.min(30.0, newTemp));
+                block.target_temperature = newTemp;
+                renderScheduleBlocks();
+            }
+        }
+
+        function removeScheduleBlock(identifier) {
+            currentSchedule.blocks = (currentSchedule.blocks || []).filter((b, idx) => 
+                (b.id !== undefined && b.id !== null ? b.id !== identifier : idx !== identifier)
+            );
+            renderScheduleBlocks();
+        }
+
+        function addScheduleBlock() {
+            if (!currentSchedule.blocks) currentSchedule.blocks = [];
+            // Determine smart start time after the latest existing block
+            const existing = currentSchedule.blocks.filter(b => b.day_of_week === selectedScheduleDay);
+            let nextTime = '07:00';
+            if (existing.length > 0) {
+                existing.sort((a, b) => a.start_time.localeCompare(b.start_time));
+                const last = existing[existing.length - 1];
+                const parts = last.start_time.split(':').map(Number);
+                const h = parts[0];
+                const m = parts[1] || 0;
+                const nextHour = (h + 4) % 24;
+                nextTime = `${String(nextHour).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            }
+
+            currentSchedule.blocks.push({
+                day_of_week: selectedScheduleDay,
+                start_time: nextTime,
+                target_temperature: 21.0
+            });
+            renderScheduleBlocks();
+        }
+
+        async function saveSchedule() {
+            if (!currentZone) return;
+            const isEnabled = document.getElementById('schedule-enable-toggle').checked;
+            const saveBtn = document.getElementById('btn-save-schedule');
+            const prevText = saveBtn.textContent;
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Gemmer...';
+
+            try {
+                const response = await fetch(`/zones/${currentZone.zone_id}/schedule`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        enabled: isEnabled,
+                        blocks: currentSchedule.blocks || []
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Kunne ikke gemme tidsplan');
+                }
+
+                currentSchedule = await response.json();
+                updateScheduleStatusPill();
+                updateActiveBlockInfo();
+                saveBtn.textContent = '✓ Gemt!';
+                setTimeout(() => {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = prevText;
+                }, 1500);
+
+                // Update current zone state and dashboard in background
+                currentZone.local_schedule_enabled = isEnabled;
+                setTimeout(loadZones, 500);
+            } catch (err) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = prevText;
+                alert('Fejl: ' + err.message);
+            }
+        }
+
+        async function applyScheduleNow() {
+            if (!currentZone) return;
+            const btn = document.getElementById('btn-apply-schedule-now');
+            const prevText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Aktivér...';
+
+            try {
+                // Ensure enabled is true
+                document.getElementById('schedule-enable-toggle').checked = true;
+                await saveSchedule();
+                btn.textContent = '✓ Aktiveret!';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = prevText;
+                }, 1500);
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = prevText;
+            }
+        }
+
+        function copyScheduleToAllDays() {
+            const currentBlocks = (currentSchedule.blocks || []).filter(b => b.day_of_week === selectedScheduleDay);
+            if (currentBlocks.length === 0) {
+                alert('Der er ingen tidsblokke for den valgte dag at kopiere.');
+                return;
+            }
+            if (!confirm(`Vil du kopiere tidsplanen fra ${DAY_NAMES[selectedScheduleDay]} til alle ugens dage? Dette vil erstatte tidsplanen for alle dage.`)) {
+                return;
+            }
+
+            // Create duplicates for each day 0..6
+            const newBlocks = [];
+            for (let day = 0; day <= 6; day++) {
+                for (const b of currentBlocks) {
+                    newBlocks.push({
+                        day_of_week: day,
+                        start_time: b.start_time,
+                        target_temperature: b.target_temperature
+                    });
+                }
+            }
+            currentSchedule.blocks = newBlocks;
+            renderScheduleBlocks();
+            alert('Tidsplan kopieret! Husk at klikke "Gem tidsplan" for at gemme ændringerne.');
+        }
+
+        // Toggle overrule checkbox change
+        const scheduleToggleEl = document.getElementById('schedule-enable-toggle');
+        if (scheduleToggleEl) {
+            scheduleToggleEl.addEventListener('change', async (e) => {
+                if (!currentZone) return;
+                const enabled = e.target.checked;
+                currentSchedule.enabled = enabled;
+                updateScheduleStatusPill();
+                try {
+                    await fetch(`/zones/${currentZone.zone_id}/schedule/toggle`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ enabled: enabled })
+                    });
+                    currentZone.local_schedule_enabled = enabled;
+                    updateActiveBlockInfo();
+                    setTimeout(loadZones, 500);
+                } catch (err) {
+                    console.error('Kunne ikke skifte overrule:', err);
+                }
+            });
+        }
+
+        // Day button switching
+        document.querySelectorAll('.schedule-day-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.schedule-day-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                selectedScheduleDay = parseInt(e.target.dataset.day, 10);
+                renderScheduleBlocks();
+            });
+        });
+
+        // Add block, save, apply, and copy buttons
+        const btnAddBlock = document.getElementById('btn-add-block');
+        if (btnAddBlock) btnAddBlock.addEventListener('click', addScheduleBlock);
+
+        const btnSaveSchedule = document.getElementById('btn-save-schedule');
+        if (btnSaveSchedule) btnSaveSchedule.addEventListener('click', saveSchedule);
+
+        const btnApplyScheduleNow = document.getElementById('btn-apply-schedule-now');
+        if (btnApplyScheduleNow) btnApplyScheduleNow.addEventListener('click', applyScheduleNow);
+
+        const btnCopySchedule = document.getElementById('btn-copy-schedule');
+        if (btnCopySchedule) btnCopySchedule.addEventListener('click', copyScheduleToAllDays);
 
         // Initialize
         loadZones();
