@@ -30,6 +30,7 @@ def mock_api(skills_db):
     api.db_path = skills_db
     api.set_zone_temperature = AsyncMock(return_value=True)
     api.broadcast_event = AsyncMock()
+    api.scheduler = None
 
     # Mock state manager
     state_mgr = MagicMock()

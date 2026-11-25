@@ -566,6 +566,7 @@ class TadoLocalAPI:
                 # Format log message: show zone name, only add device detail if not zone leader
                 if is_zone_leader:
                     # Check for window open/close and skills based on leader updates
+                    self._handle_window_open_detection(device_id, device_info, char_type)
                     if hasattr(self, 'skills_manager') and self.skills_manager:
                         asyncio.create_task(
                             self.skills_manager.handle_temperature_update_for_window(device_id, device_info, char_type)
@@ -574,8 +575,6 @@ class TadoLocalAPI:
                         cur_heating = leader_state.get('current_heating_cooling_state', 0) if leader_state else 0
                         cur_temp = leader_state.get('current_temperature') if leader_state else None
                         self.skills_manager.check_heating_stall(device_info.get('zone_id'), cur_heating, cur_temp)
-                    else:
-                        self._handle_window_open_detection(device_id, device_info, char_type)
                     # Zone leader - just show zone name
                     logger.info(f"[{src}] {zone_name} | {char_name}: {last_value} -> {value}")
                 else:

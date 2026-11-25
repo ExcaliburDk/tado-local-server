@@ -404,8 +404,14 @@ class SkillsManager:
             scheduler = getattr(self.api, "scheduler", None)
             is_sched = False
             if scheduler and hasattr(scheduler, "get_zone_schedule"):
-                sched_cfg = scheduler.get_zone_schedule(zone_id)
-                is_sched = sched_cfg.get("enabled", False)
+                try:
+                    sched_cfg = scheduler.get_zone_schedule(zone_id)
+                    if asyncio.iscoroutine(sched_cfg):
+                        sched_cfg = await sched_cfg
+                    if isinstance(sched_cfg, dict):
+                        is_sched = sched_cfg.get("enabled", False)
+                except Exception:
+                    is_sched = False
 
             if is_sched and scheduler:
                 logger.info(f"[Skill:OpenWindow] Resuming local schedule for zone {zone_id}")
@@ -496,8 +502,14 @@ class SkillsManager:
             for zone_id, zinfo in zones.items():
                 is_sched = False
                 if scheduler and hasattr(scheduler, "get_zone_schedule"):
-                    sched_cfg = scheduler.get_zone_schedule(zone_id)
-                    is_sched = sched_cfg.get("enabled", False)
+                    try:
+                        sched_cfg = scheduler.get_zone_schedule(zone_id)
+                        if asyncio.iscoroutine(sched_cfg):
+                            sched_cfg = await sched_cfg
+                        if isinstance(sched_cfg, dict):
+                            is_sched = sched_cfg.get("enabled", False)
+                    except Exception:
+                        is_sched = False
 
                 if is_sched and scheduler:
                     await scheduler.evaluate_zone(zone_id, force=True)
@@ -654,8 +666,10 @@ class SkillsManager:
     # Skill 5: Care & Protect / System Diagnostics
     # -------------------------------------------------------------------------
 
-    def check_heating_stall(self, zone_id: int, cur_heating: int, current_temp: Optional[float]):
+    def check_heating_stall(self, zone_id: Optional[int], cur_heating: int, current_temp: Optional[float]):
         """Track heating start time to detect heating stall anomalies."""
+        if not zone_id:
+            return
         now = time.time()
         if cur_heating == 1 and current_temp is not None:
             if zone_id not in self.heating_start_times:
