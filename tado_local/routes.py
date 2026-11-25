@@ -515,9 +515,12 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
 
         # Fetch local schedule statuses for all zones
         sched_summary = {}
-        if hasattr(tado_api, 'scheduler') and tado_api.scheduler:
+        scheduler = getattr(tado_api, 'scheduler', None)
+        if scheduler and hasattr(scheduler, 'get_all_schedules'):
             try:
-                sched_summary = tado_api.scheduler.get_all_schedules()
+                res = scheduler.get_all_schedules()
+                if isinstance(res, dict):
+                    sched_summary = res
             except Exception as e:
                 logger.debug(f"Could not fetch schedule summary: {e}")
 
@@ -635,7 +638,7 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
                 'window_rest_time': window_rest_time,
                 'min_temp': MIN_TARGET_TEMPERATURE,
                 'max_temp': MAX_TARGET_TEMPERATURE,
-                'local_schedule_enabled': sched_summary.get(zone_id, {}).get('enabled', False),
+                'local_schedule_enabled': bool(sched_summary.get(zone_id, {}).get('enabled', False)) if isinstance(sched_summary, dict) and isinstance(sched_summary.get(zone_id), dict) else False,
                 'state': state_summary
             })
 
@@ -982,9 +985,12 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
             }
 
         is_sched_enabled = False
-        if hasattr(tado_api, 'scheduler') and tado_api.scheduler:
+        scheduler = getattr(tado_api, 'scheduler', None)
+        if scheduler and hasattr(scheduler, 'get_zone_schedule'):
             try:
-                is_sched_enabled = tado_api.scheduler.get_zone_schedule(zone_id).get('enabled', False)
+                res = scheduler.get_zone_schedule(zone_id)
+                if isinstance(res, dict):
+                    is_sched_enabled = bool(res.get('enabled', False))
             except Exception as e:
                 logger.debug(f"Could not fetch schedule for zone {zone_id}: {e}")
 
@@ -1447,8 +1453,11 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
         tado_api = get_tado_api()
         if not tado_api:
             raise HTTPException(status_code=503, detail="API not initialized")
+        scheduler = getattr(tado_api, 'scheduler', None)
+        if not scheduler:
+            raise HTTPException(status_code=503, detail="Local scheduler not available")
         try:
-            return tado_api.scheduler.get_zone_schedule(zone_id)
+            return scheduler.get_zone_schedule(zone_id)
         except Exception as e:
             logger.error(f"Error getting schedule for zone {zone_id}: {e}")
             raise HTTPException(status_code=500, detail=str(e))
@@ -1463,12 +1472,15 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
         tado_api = get_tado_api()
         if not tado_api:
             raise HTTPException(status_code=503, detail="API not initialized")
+        scheduler = getattr(tado_api, 'scheduler', None)
+        if not scheduler:
+            raise HTTPException(status_code=503, detail="Local scheduler not available")
         try:
             blocks = [b.dict() for b in request.blocks]
-            result = tado_api.scheduler.save_zone_schedule(zone_id, blocks, enabled=request.enabled)
+            result = scheduler.save_zone_schedule(zone_id, blocks, enabled=request.enabled)
             # If enabled, evaluate immediately so changes take effect
             if result.get("enabled"):
-                await tado_api.scheduler.evaluate_zone(zone_id, force=True)
+                await scheduler.evaluate_zone(zone_id, force=True)
             return result
         except Exception as e:
             logger.error(f"Error saving schedule for zone {zone_id}: {e}")
@@ -1484,10 +1496,13 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
         tado_api = get_tado_api()
         if not tado_api:
             raise HTTPException(status_code=503, detail="API not initialized")
+        scheduler = getattr(tado_api, 'scheduler', None)
+        if not scheduler:
+            raise HTTPException(status_code=503, detail="Local scheduler not available")
         try:
-            result = tado_api.scheduler.set_zone_enabled(zone_id, request.enabled)
+            result = scheduler.set_zone_enabled(zone_id, request.enabled)
             if request.enabled:
-                await tado_api.scheduler.evaluate_zone(zone_id, force=True)
+                await scheduler.evaluate_zone(zone_id, force=True)
             return result
         except Exception as e:
             logger.error(f"Error toggling schedule for zone {zone_id}: {e}")
@@ -1499,8 +1514,11 @@ def register_routes(app: FastAPI, get_tado_api, setup_state=None, start_pairing=
         tado_api = get_tado_api()
         if not tado_api:
             raise HTTPException(status_code=503, detail="API not initialized")
+        scheduler = getattr(tado_api, 'scheduler', None)
+        if not scheduler:
+            raise HTTPException(status_code=503, detail="Local scheduler not available")
         try:
-            return tado_api.scheduler.get_all_schedules()
+            return scheduler.get_all_schedules()
         except Exception as e:
             logger.error(f"Error getting all schedules: {e}")
             raise HTTPException(status_code=500, detail=str(e))

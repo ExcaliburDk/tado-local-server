@@ -58,6 +58,7 @@ jobs:
         python -m py_compile tado_local/database.py
         python -m py_compile tado_local/homekit_uuids.py
         python -m py_compile tado_local/routes.py
+        python -m py_compile tado_local/scheduler.py
         python -m py_compile tado_local/state.py
         python -m py_compile tado_local/sync.py
 
@@ -84,6 +85,7 @@ jobs:
         python -c "from tado_local.state import DeviceStateManager"
         python -c "from tado_local.cloud import TadoCloudAPI"
         python -c "from tado_local.cache import CharacteristicCacheSQLite"
+        python -c "from tado_local.scheduler import LocalScheduler"
 
   lint:
     name: Code Quality Checks

@@ -32,7 +32,7 @@ def test_migration_adds_uuid_and_sets_user_version(tmp_path):
     conn = sqlite3.connect(db_file)
     cur = conn.execute("PRAGMA user_version")
     ver = cur.fetchone()[0]
-    assert ver == 3
+    assert ver == 4
 
     # Check uuid column exists and populated
     cur = conn.execute("PRAGMA table_info(zones)")
@@ -44,5 +44,11 @@ def test_migration_adds_uuid_and_sets_user_version(tmp_path):
     assert len(rows) == 2
     for zone_id, uuid_val in rows:
         assert uuid_val is not None and len(uuid_val) > 0
+
+    # Check local_schedules and zone_schedule_config tables exist
+    cur = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    tables = [r[0] for r in cur.fetchall()]
+    assert 'local_schedules' in tables
+    assert 'zone_schedule_config' in tables
 
     conn.close()

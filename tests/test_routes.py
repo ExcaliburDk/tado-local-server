@@ -71,6 +71,7 @@ def app_with_state(test_db):
     mock_api.event_listeners = []
     mock_api.change_tracker = {'events_received': 0, 'polling_changes': 0}
     mock_api.cloud_api = None
+    mock_api.scheduler = None
 
     # Deterministic accessory fetch timestamp
     fetched_at = "2026-01-29T10:00:00Z"
